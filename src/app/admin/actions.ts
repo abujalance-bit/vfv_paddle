@@ -5,7 +5,7 @@ import { requireAdmin, usernameToEmail } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { back, errorMessage } from "@/lib/flash";
 import { getOpenPeriod, getRankings, loadRankingPeriod } from "@/lib/data";
-import { parseSets, validateSets, type SetScore } from "@/lib/sets";
+import { formatResult, parseSets, validateSets, type SetScore } from "@/lib/sets";
 import { computeStandings, hasBlockingTie } from "@/lib/standings";
 import type { Group, Match } from "@/lib/types";
 
@@ -21,21 +21,28 @@ function done(path: string, message: string): never {
 
 const str = (formData: FormData, key: string) => String(formData.get(key) ?? "").trim();
 
-// ---------------------------------------------------------------- Meses
+// ---------------------------------------------------------------- Fases
+
+function readDates(formData: FormData, path: string) {
+  const start = str(formData, "start_date");
+  const end = str(formData, "end_date");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(start) || !/^\d{4}-\d{2}-\d{2}$/.test(end)) back(path, "error", "Indica las fechas de la fase");
+  if (end < start) back(path, "error", "La fecha de fin no puede ser anterior a la de inicio");
+  return { start, end };
+}
 
 export async function startPeriod(formData: FormData) {
   const db = await adminClient();
-  const year = Number(formData.get("year"));
-  const month = Number(formData.get("month"));
-  const { error } = await db.from("periods").insert({ year, month });
+  const { start, end } = readDates(formData, "/admin");
+  const { error } = await db.from("periods").insert({ start_date: start, end_date: end });
   if (error) back("/admin", "error", error.message);
-  done("/admin", "Mes iniciado. Ahora asigna los equipos a sus grupos.");
+  done("/admin", "Fase iniciada. Ahora asigna los equipos a sus grupos.");
 }
 
 export async function saveTiebreaks(groupId: string, formData: FormData) {
   const db = await adminClient();
   const period = await getOpenPeriod(db);
-  if (!period) back("/admin/mes", "error", "No hay mes abierto");
+  if (!period) back("/admin/mes", "error", "No hay fase abierta");
   for (const [key, value] of formData.entries()) {
     if (!key.startsWith("tb_")) continue;
     const v = String(value).trim();
@@ -49,10 +56,13 @@ export async function saveTiebreaks(groupId: string, formData: FormData) {
   done("/admin/mes", "Desempate guardado");
 }
 
-export async function closeMonth() {
+export async function closeMonth(formData: FormData) {
   const db = await adminClient();
   const period = await getOpenPeriod(db);
-  if (!period) back("/admin/mes", "error", "No hay mes abierto");
+  if (!period) back("/admin/mes", "error", "No hay fase abierta");
+  const { start, end } = readDates(formData, "/admin/mes");
+  if (start <= period.end_date) back("/admin/mes", "error", "La nueva fase tiene que empezar después de que acabe la actual");
+  await db.rpc("auto_confirm_expired");
 
   const { count } = await db
     .from("matches")
@@ -89,9 +99,14 @@ export async function closeMonth() {
     }
   }
 
-  const { error } = await db.rpc("close_period", { p_period: period.id, p_results: results });
+  const { error } = await db.rpc("close_period", {
+    p_period: period.id,
+    p_results: results,
+    p_start: start,
+    p_end: end,
+  });
   if (error) back("/admin/mes", "error", error.message);
-  done("/admin", "Mes cerrado. Se ha abierto el siguiente con los ascensos y descensos.");
+  done("/admin", "Fase cerrada. Se ha abierto la siguiente con los ascensos y descensos.");
 }
 
 // ---------------------------------------------------------------- Grupos
@@ -149,7 +164,7 @@ export async function moveGroup(groupId: string, dir: -1 | 1) {
 
 async function assignGroup(db: ReturnType<typeof createAdminClient>, teamId: string, groupId: string | null) {
   const period = await getOpenPeriod(db);
-  if (!period) throw new Error("No hay mes abierto: inícialo en el panel antes de asignar grupos");
+  if (!period) throw new Error("No hay fase abierta: iníciala en el panel antes de asignar grupos");
 
   const { data: current } = await db
     .from("group_entries")
@@ -312,8 +327,9 @@ export async function setResult(matchId: string, formData: FormData) {
     }
     const hp = formData.getAll("home_players").map(String);
     const ap = formData.getAll("away_players").map(String);
-    if ((hp.length && hp.length !== 2) || (ap.length && ap.length !== 2)) {
-      back(path, "error", "Si marcas jugadores, tienen que ser 2 por equipo");
+    const badCount = (n: number) => n > 0 && (n < 2 || n > 3);
+    if (badCount(hp.length) || badCount(ap.length)) {
+      back(path, "error", "Si marcas jugadores, tienen que ser 2 o 3 por equipo");
     }
     update = {
       status: "resolved",
@@ -328,6 +344,19 @@ export async function setResult(matchId: string, formData: FormData) {
 
   const { error } = await db.from("matches").update(update).eq("id", matchId);
   if (error) back(path, "error", error.message);
+
+  if (update.status === "resolved") {
+    const { data: teams } = await db.from("teams").select("id, name").in("id", [m.home_team_id, m.away_team_id]);
+    const name = (id: string) => teams?.find((t) => t.id === id)?.name ?? "¿?";
+    const result =
+      update.result_type === "normal"
+        ? (update.sets ?? []).map(([h, a]) => `${h}-${a}`).join(" ")
+        : formatResult({ result_type: update.result_type!, sets: null });
+    const message = `El administrador ha puesto el resultado de ${name(m.home_team_id)} vs ${name(m.away_team_id)}: ${result}.`;
+    await db.from("notifications").insert(
+      [m.home_team_id, m.away_team_id].map((team_id) => ({ team_id, match_id: matchId, kind: "resolved", message })),
+    );
+  }
   done(path, "Resultado guardado");
 }
 

@@ -8,7 +8,7 @@ const LINKS = [
   { href: "/admin/equipos", label: "Equipos" },
   { href: "/admin/grupos", label: "Grupos" },
   { href: "/admin/partidos", label: "Partidos" },
-  { href: "/admin/mes", label: "Cerrar mes" },
+  { href: "/admin/mes", label: "Cerrar fase" },
   { href: "/admin/avisos", label: "Avisos" },
 ];
 

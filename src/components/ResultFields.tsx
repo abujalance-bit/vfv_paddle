@@ -48,7 +48,7 @@ export function PlayerPicker({
 }) {
   return (
     <fieldset>
-      <legend className="label">Jugaron por {team.name} (elige 2)</legend>
+      <legend className="label">Jugaron por {team.name} (2 o 3)</legend>
       <div className="flex flex-wrap gap-2">
         {players.map((p) => (
           <label

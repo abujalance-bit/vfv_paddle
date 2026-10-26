@@ -45,7 +45,7 @@ export default async function TeamPage({ params }: { params: Promise<{ id: strin
   const sortedHistory = history
     .map((e) => ({ entry: e, period: periods.find((p) => p.id === e.period_id)! }))
     .filter((x) => x.period)
-    .sort((a, b) => b.period.year - a.period.year || b.period.month - a.period.month);
+    .sort((a, b) => b.period.start_date.localeCompare(a.period.start_date));
   const current = sortedHistory.find((x) => x.period.id === open?.id) ?? sortedHistory[0];
 
   let groupTeams: Team[] = [];

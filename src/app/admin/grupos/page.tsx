@@ -25,7 +25,7 @@ export default async function GroupsPage({ searchParams }: { searchParams: Promi
     <div className="space-y-4">
       <h1 className="h1">Grupos</h1>
       <p className="text-sm text-muted">
-        {period ? `Equipos en ${periodLabel(period)}` : "No hay mes abierto: puedes crear grupos, pero no asignar equipos."}
+        {period ? `Equipos en ${periodLabel(period)}` : "No hay fase abierta: puedes crear grupos, pero no asignar equipos."}
       </p>
       <Flash {...flash} />
 

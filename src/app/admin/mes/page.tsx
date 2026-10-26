@@ -2,7 +2,8 @@ import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getOpenPeriod, getRankings, loadRankingPeriod } from "@/lib/data";
 import { computeStandings, hasBlockingTie } from "@/lib/standings";
-import { periodLabel } from "@/lib/types";
+import { addDays, daysBetween, periodLabel } from "@/lib/types";
+import { PeriodDates } from "@/components/PeriodDates";
 import { Flash, type FlashParams } from "@/components/Flash";
 import { StandingsTable } from "@/components/StandingsTable";
 import { closeMonth, saveTiebreaks } from "../actions";
@@ -11,7 +12,7 @@ export default async function CloseMonthPage({ searchParams }: { searchParams: P
   const flash = await searchParams;
   const db = createAdminClient();
   const period = await getOpenPeriod(db);
-  if (!period) return <p className="card text-sm">No hay mes abierto.</p>;
+  if (!period) return <p className="card text-sm">No hay fase abierta.</p>;
 
   const rankings = await getRankings(db);
   const data = await Promise.all(rankings.map((r) => loadRankingPeriod(db, r.id, period.id)));
@@ -79,7 +80,7 @@ export default async function CloseMonthPage({ searchParams }: { searchParams: P
       {unresolved.length > 0 && (
         <div className="card ring-2 ring-down/40">
           <p className="text-sm">
-            Quedan <strong>{unresolved.length}</strong> partido(s) sin cerrar (por jugar, por confirmar o en revisión).
+            Quedan <strong>{unresolved.length}</strong> partido(s) sin cerrar (por jugar, por confirmar o en revisión). Los que lleven 5 días sin confirmar se dan por buenos solos.
             Entra en cada uno y pon el resultado, dalo como no presentado o anúlalo.
           </p>
           <Link href="/admin/partidos" className="mt-2 inline-block text-sm font-medium text-lime">
@@ -90,13 +91,18 @@ export default async function CloseMonthPage({ searchParams }: { searchParams: P
 
       {sections}
 
-      <form action={closeMonth} className="card space-y-2">
+      <form action={closeMonth} className="card space-y-3">
+        <h2 className="h2">Siguiente fase</h2>
+        <PeriodDates
+          start={addDays(period.end_date, 1)}
+          end={addDays(period.end_date, 1 + daysBetween(period.start_date, period.end_date))}
+        />
         <p className="text-sm text-muted">
-          Al cerrar, el primero de cada grupo sube (▲) y el último baja (▼). Se abre el mes siguiente con los partidos ya
-          generados. Esta acción no se puede deshacer.
+          Al cerrar, el primero de cada grupo sube y el último baja. Se abre la fase siguiente con esas fechas y los
+          partidos ya generados. Esta acción no se puede deshacer.
         </p>
         <button className="btn w-full" disabled={!canClose}>
-          Cerrar mes y abrir el siguiente
+          Cerrar fase y abrir la siguiente
         </button>
       </form>
     </div>

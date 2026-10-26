@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getOpenPeriod } from "@/lib/data";
-import { periodLabel, type Match, type Team } from "@/lib/types";
+import { addDays, periodLabel, type Match, type Team } from "@/lib/types";
 import { Flash, type FlashParams } from "@/components/Flash";
+import { PeriodDates } from "@/components/PeriodDates";
 import { MatchRow } from "@/components/MatchRow";
 import { startPeriod } from "./actions";
 
@@ -12,34 +13,19 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
   const period = await getOpenPeriod(db);
 
   if (!period) {
-    const now = new Date();
+    const today = new Date().toISOString().slice(0, 10);
     return (
       <div className="space-y-4">
         <h1 className="h1">Panel de administración</h1>
         <Flash {...flash} />
         <form action={startPeriod} className="card space-y-3">
-          <h2 className="h2">Iniciar mes</h2>
+          <h2 className="h2">Iniciar fase</h2>
           <p className="text-sm text-muted">
-            No hay ningún mes abierto. Inicia uno y después asigna los equipos a sus grupos (los partidos se generan
+            No hay ninguna fase abierta. Inicia una y después asigna los equipos a sus grupos (los partidos se generan
             solos).
           </p>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="label">Mes</label>
-              <select name="month" className="input" defaultValue={now.getMonth() + 1}>
-                {Array.from({ length: 12 }, (_, i) => (
-                  <option key={i + 1} value={i + 1}>
-                    {periodLabel({ year: 2000, month: i + 1 }).split(" ")[0]}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="label">Año</label>
-              <input name="year" type="number" className="input" defaultValue={now.getFullYear()} />
-            </div>
-          </div>
-          <button className="btn w-full">Iniciar mes</button>
+          <PeriodDates start={today} end={addDays(today, 26)} />
+          <button className="btn w-full">Iniciar fase</button>
         </form>
       </div>
     );
@@ -87,10 +73,12 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
             Crea los <Link className="text-lime underline" href="/admin/equipos">equipos</Link> con sus 3
             jugadores, usuario y contraseña, y asígnalos a un grupo.
           </li>
-          <li>Los equipos suben sus resultados y el rival los confirma.</li>
           <li>
-            A final de mes, resuelve los pendientes y{" "}
-            <Link className="text-lime underline" href="/admin/mes">cierra el mes</Link>.
+            Los equipos suben sus resultados y el rival los confirma. Si no responde en 5 días, se dan por buenos.
+          </li>
+          <li>
+            Al acabar la fase, resuelve los pendientes y{" "}
+            <Link className="text-lime underline" href="/admin/mes">cierra la fase</Link>.
           </li>
         </ol>
       </section>

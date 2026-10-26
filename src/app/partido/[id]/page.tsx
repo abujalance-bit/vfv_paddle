@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/auth";
 import { formatResult } from "@/lib/sets";
-import { periodLabel, type Group, type Match, type Period, type Player, type Team } from "@/lib/types";
+import { AUTO_CONFIRM_DAYS, periodLabel, type Group, type Match, type Period, type Player, type Team } from "@/lib/types";
 import { StatusBadge } from "@/components/MatchRow";
 import { Flash, type FlashParams } from "@/components/Flash";
 import { PlayerPicker, SetsInputs } from "@/components/ResultFields";
@@ -44,6 +44,16 @@ export default async function MatchPage({
   const isMine = !!myTeam && (myTeam === home.id || myTeam === away.id);
   const isOpen = period?.status === "open";
   const reportedByMe = match.reported_by_team_id === myTeam;
+  const autoConfirmAt = match.reported_at
+    ? new Date(new Date(match.reported_at).getTime() + AUTO_CONFIRM_DAYS * 86_400_000).toLocaleString("es-ES", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "Europe/Madrid",
+      })
+    : null;
 
   return (
     <div className="space-y-4">
@@ -72,12 +82,12 @@ export default async function MatchPage({
             )}
             {match.home_players && (
               <p className="text-muted">
-                {home.name}: {match.home_players.map(playerName).join(" y ")}
+                {home.name}: {joinNames(match.home_players.map(playerName))}
               </p>
             )}
             {match.away_players && (
               <p className="text-muted">
-                {away.name}: {match.away_players.map(playerName).join(" y ")}
+                {away.name}: {joinNames(match.away_players.map(playerName))}
               </p>
             )}
             {match.status === "disputed" && match.dispute_reason && (
@@ -104,13 +114,18 @@ export default async function MatchPage({
             />
           </div>
           <button className="btn w-full">Enviar resultado</button>
-          <p className="text-xs text-muted">El equipo rival recibirá un aviso para confirmarlo.</p>
+          <p className="text-xs text-muted">
+            El equipo rival recibirá un aviso para confirmarlo. Si no responde en {AUTO_CONFIRM_DAYS} días, se dará por bueno.
+          </p>
         </form>
       )}
 
       {isMine && isOpen && match.status === "reported" && !reportedByMe && (
         <section className="card space-y-3 ring-2 ring-amber-400/50">
           <h2 className="h2">¿Es correcto este resultado?</h2>
+          {autoConfirmAt && (
+            <p className="text-sm text-muted">Si no respondes, se dará por bueno el {autoConfirmAt}.</p>
+          )}
           <form action={confirmResult.bind(null, match.id)}>
             <button className="btn w-full">✓ Sí, confirmar</button>
           </form>
@@ -123,7 +138,10 @@ export default async function MatchPage({
 
       {isMine && isOpen && match.status === "reported" && reportedByMe && (
         <section className="card space-y-3">
-          <p className="text-sm text-muted">Esperando a que el equipo rival confirme el resultado.</p>
+          <p className="text-sm text-muted">
+            Esperando a que el equipo rival confirme el resultado.
+            {autoConfirmAt && ` Si no responde, se dará por bueno el ${autoConfirmAt}.`}
+          </p>
           <form action={withdrawResult.bind(null, match.id)}>
             <button className="btn-secondary w-full">Retirar resultado para corregirlo</button>
           </form>
@@ -141,4 +159,9 @@ export default async function MatchPage({
       )}
     </div>
   );
+}
+
+// "Ana, Bea y Carla"
+function joinNames(names: string[]) {
+  return names.length > 1 ? `${names.slice(0, -1).join(", ")} y ${names[names.length - 1]}` : names.join("");
 }

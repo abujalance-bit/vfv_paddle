@@ -58,7 +58,7 @@ export default async function TeamEditPage({
         </div>
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" name="active" defaultChecked={team.active} className="h-4 w-4 accent-lime" />
-          Activo (si lo desactivas, no pasa al mes siguiente)
+          Activo (si lo desactivas, no pasa a la fase siguiente)
         </label>
         <button className="btn w-full">Guardar</button>
       </form>
@@ -81,7 +81,7 @@ export default async function TeamEditPage({
             <button className="btn-secondary w-full">Cambiar grupo</button>
           </>
         ) : (
-          <p className="text-sm text-muted">No hay mes abierto.</p>
+          <p className="text-sm text-muted">No hay fase abierta.</p>
         )}
       </form>
 

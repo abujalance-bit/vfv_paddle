@@ -5,7 +5,7 @@ import type { GroupEntry } from "@/lib/types";
 type Props = {
   rows: StandingRow[];
   highlightTeamId?: string | null;
-  // Si el mes está cerrado, se muestra el movimiento real; si está abierto, la previsión
+  // Si la fase está cerrada, se muestra el movimiento real; si está abierto, la previsión
   closedEntries?: GroupEntry[];
   canGoUp: boolean;
   canGoDown: boolean;

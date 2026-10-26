@@ -1,9 +1,12 @@
 # VFV Pádel
 
-App web (pensada para móvil) para gestionar la liga de pádel por rankings: grupos de 4 equipos, todos contra todos cada mes, el primero sube y el último baja.
+App web (pensada para móvil) para gestionar la liga de pádel por rankings: grupos de 4 equipos, todos contra todos en cada fase, el primero sube y el último baja.
 
 - **Stack:** Next.js 15 + Tailwind 4, desplegado en Vercel. Base de datos y login en Supabase. Todo en plan gratuito.
 - **Rankings:** Masculino y Femenino, cada uno con los grupos que crees (Grupo 1 = el más alto).
+- **Fases:** cada fase tiene fecha de inicio y de fin (por ejemplo, del 19 oct al 14 nov). Al cerrar una fase, eliges las fechas de la siguiente.
+- **Plazo de confirmación:** si el rival no confirma ni rechaza un resultado en 5 días, se da por bueno.
+- **Notificaciones:** la campana avisa al rival cuando le suben un resultado, al equipo que lo subió cuando lo confirman o rechazan, y al admin cuando hay un rechazo.
 - **Puntos:** victoria 3, derrota 1, no presentado 0, partido anulado 0 y 0.
 - **Desempates:** los decide el admin a mano. Solo es obligatorio cuando el empate decide quién sube o quién baja.
 
@@ -11,23 +14,23 @@ App web (pensada para móvil) para gestionar la liga de pádel por rankings: gru
 
 | Quién | Qué puede hacer |
 |---|---|
-| Cualquiera (sin entrar) | Ver clasificaciones, partidos, histórico de meses y avisos |
+| Cualquiera (sin entrar) | Ver clasificaciones, partidos, histórico de fases y avisos |
 | Equipo (su usuario) | Subir el resultado de sus partidos (sets y los 2 jugadores de cada equipo), confirmar o rechazar lo que suba el rival, retirar un resultado suyo aún sin confirmar |
-| Admin | Todo: equipos, jugadores, usuarios y contraseñas, grupos, poner o corregir cualquier resultado, desempates, cerrar el mes y avisos |
+| Admin | Todo: equipos, jugadores, usuarios y contraseñas, grupos, poner o corregir cualquier resultado, desempates, cerrar la fase y avisos |
 
 Cuando un equipo sube un resultado, al rival le sale un aviso destacado en Inicio. Si lo rechaza, el partido pasa a **En revisión** y aparece en el panel del admin.
 
-Al **cerrar el mes**:
+Al **cerrar la fase**:
 1. Todos los partidos tienen que estar confirmados o resueltos. Los no jugados los resuelve el admin: no presentado, anulado o con el resultado que él ponga.
 2. El primero de cada grupo sube y el último baja.
-3. Se abre el mes siguiente con los equipos recolocados y los partidos generados. Los equipos marcados como inactivos no pasan al mes siguiente.
+3. Se abre la fase siguiente con los equipos recolocados y los partidos generados. Los equipos marcados como inactivos no pasan a la fase siguiente.
 
 ## Puesta en marcha
 
 ### 1. Supabase (base de datos)
 
 1. Crea una cuenta en <https://supabase.com> (puedes entrar con GitHub) y un proyecto nuevo. Región: **Europe (Frankfurt o Paris)**.
-2. Ve a **SQL Editor → New query**, pega el contenido de [`supabase/schema.sql`](supabase/schema.sql) y pulsa **Run**.
+2. Ve a **SQL Editor → New query**, pega el contenido de [`supabase/schema.sql`](supabase/schema.sql) y pulsa **Run**. Después haz lo mismo con [`supabase/002_fases_avisos.sql`](supabase/002_fases_avisos.sql).
 3. Ve a **Authentication → Sign In / Providers → Email** y **desactiva "Allow new users to sign up"**. Los usuarios solo los crea el admin desde la app.
 4. Ve a **Project Settings → API Keys** y apunta:
    - Project URL (`https://xxxx.supabase.co`)
@@ -67,7 +70,7 @@ El mismo comando sirve para cambiar la contraseña del admin si se te olvida.
 
 ### 4. Primeros pasos en la app
 
-1. Entra con tu usuario admin, ve a **Admin → Panel** y pulsa **Iniciar mes**.
+1. Entra con tu usuario admin, ve a **Admin → Panel** y pulsa **Iniciar fase**.
 2. En **Grupos**, crea los grupos de cada ranking.
 3. En **Equipos**, crea cada equipo con sus 3 jugadores, su usuario, su contraseña y su grupo. Al completar un grupo, los partidos se generan solos.
 4. Pásale a cada equipo su usuario, su contraseña y la URL.
@@ -83,10 +86,11 @@ Se abre como una app más.
 ## Estructura
 
 ```
-supabase/schema.sql        Tablas, seguridad (RLS) y funciones (subir/confirmar resultado, cerrar mes)
+supabase/schema.sql        Tablas, seguridad (RLS) y funciones (subir/confirmar resultado, cerrar fase)
+supabase/002_fases_avisos.sql  Fases por fechas, notificaciones y confirmación automática a los 5 días
 scripts/create-admin.mjs   Crea o actualiza el usuario administrador
 src/lib/standings.ts       Cálculo de la clasificación
-src/app/ranking/[slug]     Clasificación pública por ranking y mes
+src/app/page.tsx           Clasificación pública por ranking y fase
 src/app/partido/[id]       Ficha del partido: subir, confirmar o rechazar resultado
 src/app/admin/*            Panel de administración
 ```

@@ -8,7 +8,8 @@ import { getOpenPeriod } from "@/lib/data";
 import { LOGO_SRC } from "@/lib/brand";
 import { signOut } from "@/app/login/actions";
 import { NavTabs } from "@/components/NavTabs";
-import { LogInIcon, LogOutIcon, ShieldIcon } from "@/components/Icons";
+import { runAutoConfirm } from "@/lib/auto-confirm";
+import { BellIcon, LogInIcon, LogOutIcon, ShieldIcon } from "@/components/Icons";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const archivo = Archivo({ subsets: ["latin"], weight: ["700", "800", "900"], variable: "--font-archivo" });
@@ -26,12 +27,23 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  await runAutoConfirm().catch(() => {});
   const profile = await getProfile();
+  const supabase = await createClient();
+
+  // Notificaciones sin leer (RLS solo devuelve las del equipo, o las del admin)
+  let unread = 0;
+  if (profile) {
+    const { count } = await supabase
+      .from("notifications")
+      .select("id", { count: "exact", head: true })
+      .is("read_at", null);
+    unread = count ?? 0;
+  }
 
   // Resultados del rival pendientes de confirmar, para el aviso de la pestaña "Mi equipo"
   let pendingCount = 0;
   if (profile?.team_id) {
-    const supabase = await createClient();
     const period = await getOpenPeriod(supabase);
     if (period) {
       const { count } = await supabase
@@ -53,7 +65,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             <Link href="/" className="flex items-center gap-3">
               <span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-full bg-white ring-4 ring-white/10">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={LOGO_SRC} alt="" className="h-full w-full object-cover" />
+                <img src={LOGO_SRC} alt="Pádel X4" className="h-full w-full object-contain p-0.5" />
               </span>
               <span className="leading-none">
                 <span className="block text-[11px] font-semibold tracking-[0.35em] text-muted">RANKING</span>
@@ -63,6 +75,20 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
               </span>
             </Link>
             <div className="flex items-center gap-1">
+              {profile && (
+                <Link
+                  href="/notificaciones"
+                  className="relative grid h-10 w-10 place-items-center rounded-xl text-muted hover:text-fg"
+                  aria-label={`Notificaciones${unread ? ` (${unread} sin leer)` : ""}`}
+                >
+                  <BellIcon className="h-6 w-6" />
+                  {unread > 0 && (
+                    <span className="absolute right-0.5 top-0.5 grid h-5 min-w-5 place-items-center rounded-full bg-lime px-1 text-[11px] font-black text-ink">
+                      {unread > 9 ? "9+" : unread}
+                    </span>
+                  )}
+                </Link>
+              )}
               {profile?.role === "admin" && (
                 <Link href="/admin" className="grid h-10 w-10 place-items-center rounded-xl text-muted hover:text-fg" aria-label="Administración">
                   <ShieldIcon />

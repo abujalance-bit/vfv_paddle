@@ -10,7 +10,7 @@ export default async function AdminMatchesPage({ searchParams }: { searchParams:
   const { estado = "todos" } = await searchParams;
   const db = createAdminClient();
   const period = await getOpenPeriod(db);
-  if (!period) return <p className="card text-sm">No hay mes abierto.</p>;
+  if (!period) return <p className="card text-sm">No hay fase abierta.</p>;
 
   const rankings = await getRankings(db);
   let query = db.from("matches").select("*").eq("period_id", period.id);

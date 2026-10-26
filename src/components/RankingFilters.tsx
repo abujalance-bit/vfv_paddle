@@ -13,7 +13,7 @@ type Props = {
   showLegend?: boolean;
 };
 
-// Selector Masculino/Femenino + fase (mes) + leyenda
+// Selector Masculino/Femenino + fase + leyenda
 export function RankingFilters({ basePath, rankings, ranking, periods, period, showLegend }: Props) {
   const periodQuery = period ? `&periodo=${period.id}` : "";
   return (

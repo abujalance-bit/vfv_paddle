@@ -47,7 +47,7 @@ export default async function TeamsPage({ searchParams }: { searchParams: Promis
               </select>
             </div>
             <div>
-              <label className="label">Grupo {!period && "(inicia un mes)"}</label>
+              <label className="label">Grupo {!period && "(inicia una fase)"}</label>
               <select name="group_id" className="input" disabled={!period}>
                 <option value="">Sin grupo</option>
                 {groups.map((g) => (

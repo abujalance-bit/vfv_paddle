@@ -11,13 +11,12 @@ export async function getRankings(supabase: SupabaseClient) {
   return (data ?? []) as Ranking[];
 }
 
-// Meses de más reciente a más antiguo, y el elegido (?periodo=) o el abierto por defecto
+// Fases de más reciente a más antigua, y el elegido (?periodo=) o el abierto por defecto
 export async function getPeriods(supabase: SupabaseClient, selectedId?: string) {
   const { data } = await supabase
     .from("periods")
     .select("*")
-    .order("year", { ascending: false })
-    .order("month", { ascending: false })
+    .order("start_date", { ascending: false })
     .limit(36);
   const periods = (data ?? []) as Period[];
   const period =
@@ -32,7 +31,7 @@ export type RankingPeriodData = {
   matches: Match[];
 };
 
-// Todo lo necesario para pintar la clasificación de un ranking en un mes
+// Todo lo necesario para pintar la clasificación de un ranking en una fase
 export async function loadRankingPeriod(
   supabase: SupabaseClient,
   rankingId: number,

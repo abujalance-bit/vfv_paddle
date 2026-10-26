@@ -8,8 +8,8 @@ export type Player = { id: string; team_id: string; name: string; position: numb
 
 export type Period = {
   id: string;
-  year: number;
-  month: number;
+  start_date: string; // YYYY-MM-DD
+  end_date: string;
   status: "open" | "closed";
   closed_at: string | null;
 };
@@ -52,14 +52,38 @@ export type Announcement = {
   created_at: string;
 };
 
-const MONTHS = [
-  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
-];
+const MONTHS_SHORT = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 
-export function periodLabel(p: Pick<Period, "year" | "month">) {
-  return `${MONTHS[p.month - 1]} ${p.year}`;
+// Las fechas van como texto YYYY-MM-DD para no depender de la zona horaria
+function parts(iso: string) {
+  const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
+  return { y, m, d };
 }
+
+export function formatDay(iso: string, withYear = false) {
+  const { y, m, d } = parts(iso);
+  return `${d} ${MONTHS_SHORT[m - 1]}${withYear ? ` ${y}` : ""}`;
+}
+
+// "19 oct – 14 nov 2026" (o con los dos años si cambia de año)
+export function periodLabel(p: Pick<Period, "start_date" | "end_date">) {
+  const sameYear = parts(p.start_date).y === parts(p.end_date).y;
+  return `${formatDay(p.start_date, !sameYear)} – ${formatDay(p.end_date, true)}`;
+}
+
+export function addDays(iso: string, days: number) {
+  const { y, m, d } = parts(iso);
+  const date = new Date(Date.UTC(y, m - 1, d + days));
+  return date.toISOString().slice(0, 10);
+}
+
+export function daysBetween(fromIso: string, toIso: string) {
+  const a = parts(fromIso);
+  const b = parts(toIso);
+  return Math.round((Date.UTC(b.y, b.m - 1, b.d) - Date.UTC(a.y, a.m - 1, a.d)) / 86_400_000);
+}
+
+export const AUTO_CONFIRM_DAYS = 5;
 
 export const STATUS_LABEL: Record<MatchStatus, string> = {
   pending: "Por jugar",
