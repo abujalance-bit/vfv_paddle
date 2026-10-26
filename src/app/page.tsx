@@ -1,103 +1,129 @@
-import Image from "next/image";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import { getProfile } from "@/lib/auth";
+import { getOpenPeriod } from "@/lib/data";
+import { periodLabel, type Announcement, type Match, type Team } from "@/lib/types";
+import { MatchRow } from "@/components/MatchRow";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  const supabase = await createClient();
+  const profile = await getProfile();
+  const period = await getOpenPeriod(supabase);
+
+  const { data: annData } = await supabase
+    .from("announcements")
+    .select("*")
+    .order("pinned", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(10);
+  const announcements = (annData ?? []) as Announcement[];
+
+  let myTeam: Team | null = null;
+  let myMatches: Match[] = [];
+  let teams: Team[] = [];
+  if (profile?.team_id && period) {
+    const [{ data: t }, { data: m }] = await Promise.all([
+      supabase.from("teams").select("*"),
+      supabase
+        .from("matches")
+        .select("*")
+        .eq("period_id", period.id)
+        .or(`home_team_id.eq.${profile.team_id},away_team_id.eq.${profile.team_id}`),
+    ]);
+    teams = (t ?? []) as Team[];
+    myTeam = teams.find((x) => x.id === profile.team_id) ?? null;
+    myMatches = (m ?? []) as Match[];
+  }
+
+  const toConfirm = myMatches.filter((m) => m.status === "reported" && m.reported_by_team_id !== profile?.team_id);
+  const waiting = myMatches.filter((m) => m.status === "reported" && m.reported_by_team_id === profile?.team_id);
+
+  let disputedCount = 0;
+  if (profile?.role === "admin" && period) {
+    const { count } = await supabase
+      .from("matches")
+      .select("id", { count: "exact", head: true })
+      .eq("period_id", period.id)
+      .eq("status", "disputed");
+    disputedCount = count ?? 0;
+  }
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="space-y-4">
+      <div>
+        <h1 className="h1">{myTeam ? myTeam.name : "Liga VFV Pádel"}</h1>
+        <p className="text-sm text-gray-500">{period ? `Mes en juego: ${periodLabel(period)}` : "No hay mes abierto"}</p>
+      </div>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      {toConfirm.length > 0 && (
+        <section className="card ring-2 ring-amber-300">
+          <h2 className="h2 mb-1">🔔 Tienes {toConfirm.length} resultado(s) por confirmar</h2>
+          <p className="mb-1 text-sm text-gray-600">El equipo rival ha subido el resultado. Revísalo y confírmalo.</p>
+          {toConfirm.map((m) => (
+            <MatchRow key={m.id} match={m} teams={teams} />
+          ))}
+        </section>
+      )}
+
+      {profile?.role === "admin" && (
+        <Link href="/admin" className="card block">
+          <h2 className="h2">Panel de administración →</h2>
+          {disputedCount > 0 && (
+            <p className="mt-1 text-sm font-medium text-red-700">⚠️ {disputedCount} partido(s) en revisión</p>
+          )}
+        </Link>
+      )}
+
+      {myTeam && (
+        <section className="card">
+          <h2 className="h2 mb-1">Mis partidos del mes</h2>
+          {myMatches.length === 0 && <p className="text-sm text-gray-500">Aún no tienes partidos asignados.</p>}
+          {myMatches.map((m) => (
+            <MatchRow key={m.id} match={m} teams={teams} />
+          ))}
+          {waiting.length > 0 && (
+            <p className="mt-2 text-xs text-gray-500">
+              {waiting.length} resultado(s) subidos por ti esperando confirmación del rival.
+            </p>
+          )}
+        </section>
+      )}
+
+      <div className="grid grid-cols-2 gap-3">
+        <Link href="/ranking/masculino" className="card text-center font-semibold">
+          Ranking masculino
+        </Link>
+        <Link href="/ranking/femenino" className="card text-center font-semibold">
+          Ranking femenino
+        </Link>
+      </div>
+
+      <section className="space-y-3">
+        <h2 className="h2">Avisos</h2>
+        {announcements.length === 0 && <p className="text-sm text-gray-500">No hay avisos.</p>}
+        {announcements.map((a) => (
+          <article key={a.id} className="card">
+            <h3 className="font-semibold">
+              {a.pinned && "📌 "}
+              {a.title}
+            </h3>
+            <p className="text-xs text-gray-400">{new Date(a.created_at).toLocaleDateString("es-ES")}</p>
+            {a.body && <p className="mt-2 whitespace-pre-line text-sm text-gray-700">{a.body}</p>}
+          </article>
+        ))}
+      </section>
+
+      {!profile && (
+        <p className="text-center text-sm text-gray-500">
+          ¿Eres de un equipo?{" "}
+          <Link href="/login" className="font-medium text-brand-700">
+            Entra
+          </Link>{" "}
+          para subir resultados.
+        </p>
+      )}
     </div>
   );
 }

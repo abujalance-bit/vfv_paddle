@@ -1,36 +1,92 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# VFV Pádel
 
-## Getting Started
+App web (pensada para móvil) para gestionar la liga de pádel por rankings: grupos de 4 equipos, todos contra todos cada mes, el primero sube y el último baja.
 
-First, run the development server:
+- **Stack:** Next.js 15 + Tailwind 4, desplegado en Vercel. Base de datos y login en Supabase. Todo en plan gratuito.
+- **Rankings:** Masculino y Femenino, cada uno con los grupos que crees (Grupo 1 = el más alto).
+- **Puntos:** victoria 3, derrota 1, no presentado 0, partido anulado 0 y 0.
+- **Desempates:** los decide el admin a mano. Solo es obligatorio cuando el empate decide quién sube o quién baja.
+
+## Cómo funciona
+
+| Quién | Qué puede hacer |
+|---|---|
+| Cualquiera (sin entrar) | Ver clasificaciones, partidos, histórico de meses y avisos |
+| Equipo (su usuario) | Subir el resultado de sus partidos (sets y los 2 jugadores de cada equipo), confirmar o rechazar lo que suba el rival, retirar un resultado suyo aún sin confirmar |
+| Admin | Todo: equipos, jugadores, usuarios y contraseñas, grupos, poner o corregir cualquier resultado, desempates, cerrar el mes y avisos |
+
+Cuando un equipo sube un resultado, al rival le sale un aviso destacado en Inicio. Si lo rechaza, el partido pasa a **En revisión** y aparece en el panel del admin.
+
+Al **cerrar el mes**:
+1. Todos los partidos tienen que estar confirmados o resueltos. Los no jugados los resuelve el admin: no presentado, anulado o con el resultado que él ponga.
+2. El primero de cada grupo sube y el último baja.
+3. Se abre el mes siguiente con los equipos recolocados y los partidos generados. Los equipos marcados como inactivos no pasan al mes siguiente.
+
+## Puesta en marcha
+
+### 1. Supabase (base de datos)
+
+1. Crea una cuenta en <https://supabase.com> (puedes entrar con GitHub) y un proyecto nuevo. Región: **Europe (Frankfurt o Paris)**.
+2. Ve a **SQL Editor → New query**, pega el contenido de [`supabase/schema.sql`](supabase/schema.sql) y pulsa **Run**.
+3. Ve a **Authentication → Sign In / Providers → Email** y **desactiva "Allow new users to sign up"**. Los usuarios solo los crea el admin desde la app.
+4. Ve a **Project Settings → API Keys** y apunta:
+   - Project URL (`https://xxxx.supabase.co`)
+   - Publishable key (`sb_publishable_...`, o la antigua *anon*)
+   - Secret key (`sb_secret_...`, o la antigua *service_role*). **No la compartas con nadie.**
+
+> ⚠️ En el plan gratuito, Supabase **pausa el proyecto tras 7 días sin actividad**. Con la liga en marcha no pasa, pero en vacaciones puede ocurrir. Se reactiva con un clic desde el panel de Supabase.
+
+### 2. Probar en local (opcional)
+
+Hace falta **Node 22 o superior**, porque supabase-js ya no funciona con Node 20. Si tienes otra versión instalada, los comandos de abajo usan Node 22 a través de `npx -p node@22` sin tocar tu instalación.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env.local      # y rellena las 3 claves
+npm install
+npx -p node@22 node --env-file=.env.local scripts/create-admin.mjs admin TuContraseñaSegura
+npx -p node@22 next dev         # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 3. Vercel (web)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Sube este repositorio a GitHub (puede ser privado).
+2. Crea una cuenta en <https://vercel.com> con GitHub, pulsa **Add New → Project** e importa el repositorio.
+3. En **Environment Variables** añade:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+   - `SUPABASE_SECRET_KEY`
+4. Pulsa **Deploy**. Te da una URL del tipo `https://vfv-padel.vercel.app`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Si no creaste el admin en el paso 2, créalo desde tu PC con el `.env.local` relleno:
 
-## Learn More
+```bash
+npx -p node@22 node --env-file=.env.local scripts/create-admin.mjs admin TuContraseñaSegura
+```
 
-To learn more about Next.js, take a look at the following resources:
+El mismo comando sirve para cambiar la contraseña del admin si se te olvida.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 4. Primeros pasos en la app
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Entra con tu usuario admin, ve a **Admin → Panel** y pulsa **Iniciar mes**.
+2. En **Grupos**, crea los grupos de cada ranking.
+3. En **Equipos**, crea cada equipo con sus 3 jugadores, su usuario, su contraseña y su grupo. Al completar un grupo, los partidos se generan solos.
+4. Pásale a cada equipo su usuario, su contraseña y la URL.
 
-## Deploy on Vercel
+### Instalar en el móvil
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Abre la URL en el móvil:
+- iPhone (Safari): **Compartir → Añadir a pantalla de inicio**.
+- Android (Chrome): **⋮ → Añadir a pantalla de inicio / Instalar app**.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Se abre como una app más.
+
+## Estructura
+
+```
+supabase/schema.sql        Tablas, seguridad (RLS) y funciones (subir/confirmar resultado, cerrar mes)
+scripts/create-admin.mjs   Crea o actualiza el usuario administrador
+src/lib/standings.ts       Cálculo de la clasificación
+src/app/ranking/[slug]     Clasificación pública por ranking y mes
+src/app/partido/[id]       Ficha del partido: subir, confirmar o rechazar resultado
+src/app/admin/*            Panel de administración
+```
