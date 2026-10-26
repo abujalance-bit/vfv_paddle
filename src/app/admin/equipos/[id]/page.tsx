@@ -34,7 +34,7 @@ export default async function TeamEditPage({
 
   return (
     <div className="space-y-4">
-      <Link href="/admin/equipos" className="text-sm text-brand-700">
+      <Link href="/admin/equipos" className="text-sm text-lime">
         ← Equipos
       </Link>
       <h1 className="h1">{team.name}</h1>
@@ -57,7 +57,7 @@ export default async function TeamEditPage({
           <input name="new_player" className="input" />
         </div>
         <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" name="active" defaultChecked={team.active} className="h-4 w-4 accent-brand-600" />
+          <input type="checkbox" name="active" defaultChecked={team.active} className="h-4 w-4 accent-lime" />
           Activo (si lo desactivas, no pasa al mes siguiente)
         </label>
         <button className="btn w-full">Guardar</button>
@@ -75,19 +75,19 @@ export default async function TeamEditPage({
                 </option>
               ))}
             </select>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted">
               Al cambiar de grupo se borran sus partidos del grupo anterior y se crean los del nuevo.
             </p>
             <button className="btn-secondary w-full">Cambiar grupo</button>
           </>
         ) : (
-          <p className="text-sm text-gray-500">No hay mes abierto.</p>
+          <p className="text-sm text-muted">No hay mes abierto.</p>
         )}
       </form>
 
       <form action={resetPassword.bind(null, team.id)} className="card space-y-3">
         <h2 className="h2">Acceso</h2>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted">
           Usuario: <span className="font-mono font-semibold">{profile?.username ?? "sin usuario"}</span>
         </p>
         <input name="password" className="input" placeholder="Nueva contraseña" minLength={6} required />

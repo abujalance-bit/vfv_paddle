@@ -11,6 +11,20 @@ export async function getRankings(supabase: SupabaseClient) {
   return (data ?? []) as Ranking[];
 }
 
+// Meses de más reciente a más antiguo, y el elegido (?periodo=) o el abierto por defecto
+export async function getPeriods(supabase: SupabaseClient, selectedId?: string) {
+  const { data } = await supabase
+    .from("periods")
+    .select("*")
+    .order("year", { ascending: false })
+    .order("month", { ascending: false })
+    .limit(36);
+  const periods = (data ?? []) as Period[];
+  const period =
+    periods.find((p) => p.id === selectedId) ?? periods.find((p) => p.status === "open") ?? periods[0] ?? null;
+  return { periods, period };
+}
+
 export type RankingPeriodData = {
   groups: Group[];
   entries: GroupEntry[];

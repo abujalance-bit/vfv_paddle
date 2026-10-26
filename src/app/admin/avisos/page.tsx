@@ -19,7 +19,7 @@ export default async function AnnouncementsPage({ searchParams }: { searchParams
         <input name="title" className="input" placeholder="Título" required />
         <textarea name="body" className="input" rows={4} placeholder="Texto (opcional)" />
         <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" name="pinned" className="h-4 w-4 accent-brand-600" />
+          <input type="checkbox" name="pinned" className="h-4 w-4 accent-lime" />
           Fijar arriba
         </label>
         <button className="btn w-full">Publicar</button>
@@ -33,10 +33,10 @@ export default async function AnnouncementsPage({ searchParams }: { searchParams
               {a.title}
             </h3>
             <form action={deleteAnnouncement.bind(null, a.id)}>
-              <button className="text-xs text-red-600">Borrar</button>
+              <button className="text-xs text-down">Borrar</button>
             </form>
           </div>
-          {a.body && <p className="mt-1 whitespace-pre-line text-sm text-gray-700">{a.body}</p>}
+          {a.body && <p className="mt-1 whitespace-pre-line text-sm text-fg/85">{a.body}</p>}
         </article>
       ))}
     </div>

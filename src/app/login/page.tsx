@@ -19,7 +19,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         </div>
         <button className="btn w-full">Entrar</button>
       </form>
-      <p className="mt-4 text-center text-sm text-gray-500">
+      <p className="mt-4 text-center text-sm text-muted">
         ¿No tienes usuario? Pídeselo al administrador de la liga.
       </p>
     </div>

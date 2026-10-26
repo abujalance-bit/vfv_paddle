@@ -7,7 +7,7 @@ export function SetsInputs({ home, away, initial }: { home: Team; away: Team; in
       <div className="grid grid-cols-[1fr_repeat(3,3.5rem)] items-center gap-2 text-sm">
         <span />
         {[1, 2, 3].map((i) => (
-          <span key={i} className="text-center text-xs font-medium text-gray-500">
+          <span key={i} className="text-center text-xs font-medium text-muted">
             Set {i}
           </span>
         ))}
@@ -30,7 +30,7 @@ export function SetsInputs({ home, away, initial }: { home: Team; away: Team; in
           </div>
         ))}
       </div>
-      <p className="mt-1 text-xs text-gray-500">El tercer set solo si hizo falta (vale también un super tie-break, p. ej. 10-8).</p>
+      <p className="mt-1 text-xs text-muted">El tercer set solo si hizo falta (vale también un super tie-break, p. ej. 10-8).</p>
     </div>
   );
 }
@@ -53,9 +53,9 @@ export function PlayerPicker({
         {players.map((p) => (
           <label
             key={p.id}
-            className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm ring-1 ring-gray-300 has-[:checked]:bg-brand-50 has-[:checked]:ring-brand-500"
+            className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm ring-1 ring-line has-[:checked]:bg-lime/10 has-[:checked]:ring-lime"
           >
-            <input type="checkbox" name={name} value={p.id} defaultChecked={selected?.includes(p.id)} className="accent-brand-600" />
+            <input type="checkbox" name={name} value={p.id} defaultChecked={selected?.includes(p.id)} className="accent-lime" />
             {p.name}
           </label>
         ))}

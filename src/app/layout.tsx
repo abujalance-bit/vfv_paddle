@@ -1,60 +1,90 @@
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
+import { Archivo, Inter } from "next/font/google";
 import "./globals.css";
 import { getProfile } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
+import { getOpenPeriod } from "@/lib/data";
+import { LOGO_SRC } from "@/lib/brand";
 import { signOut } from "@/app/login/actions";
+import { NavTabs } from "@/components/NavTabs";
+import { LogInIcon, LogOutIcon, ShieldIcon } from "@/components/Icons";
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const archivo = Archivo({ subsets: ["latin"], weight: ["700", "800", "900"], variable: "--font-archivo" });
 
 export const metadata: Metadata = {
-  title: "VFV Pádel",
-  description: "Rankings, grupos y resultados de la liga de pádel",
-  appleWebApp: { capable: true, title: "VFV Pádel", statusBarStyle: "default" },
+  title: "Ranking Equipos VFV",
+  description: "Clasificación, grupos y resultados de la liga de pádel por equipos VFV",
+  appleWebApp: { capable: true, title: "Ranking VFV", statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#15803d",
+  themeColor: "#0a0f1a",
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const profile = await getProfile();
 
+  // Resultados del rival pendientes de confirmar, para el aviso de la pestaña "Mi equipo"
+  let pendingCount = 0;
+  if (profile?.team_id) {
+    const supabase = await createClient();
+    const period = await getOpenPeriod(supabase);
+    if (period) {
+      const { count } = await supabase
+        .from("matches")
+        .select("id", { count: "exact", head: true })
+        .eq("period_id", period.id)
+        .eq("status", "reported")
+        .neq("reported_by_team_id", profile.team_id)
+        .or(`home_team_id.eq.${profile.team_id},away_team_id.eq.${profile.team_id}`);
+      pendingCount = count ?? 0;
+    }
+  }
+
   return (
-    <html lang="es">
+    <html lang="es" className={`${inter.variable} ${archivo.variable}`}>
       <body className="min-h-dvh font-sans antialiased">
-        <header className="sticky top-0 z-10 bg-brand-700 text-white shadow">
-          <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
-            <Link href="/" className="text-lg font-bold tracking-tight">
-              🎾 VFV Pádel
+        <header className="sticky top-0 z-20 border-b border-line bg-ink/85 backdrop-blur-md">
+          <div className="mx-auto flex max-w-3xl items-center justify-between px-4 pb-3 pt-4">
+            <Link href="/" className="flex items-center gap-3">
+              <span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-full bg-white ring-4 ring-white/10">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={LOGO_SRC} alt="" className="h-full w-full object-cover" />
+              </span>
+              <span className="leading-none">
+                <span className="block text-[11px] font-semibold tracking-[0.35em] text-muted">RANKING</span>
+                <span className="font-display text-[22px] font-black tracking-tight">
+                  EQUIPOS <span className="text-lime">VFV</span>
+                </span>
+              </span>
             </Link>
-            {profile ? (
-              <form action={signOut} className="flex items-center gap-3 text-sm">
-                <span className="max-w-32 truncate opacity-90">{profile.username}</span>
-                <button className="rounded-lg bg-white/15 px-3 py-1.5 font-medium">Salir</button>
-              </form>
-            ) : (
-              <Link href="/login" className="rounded-lg bg-white/15 px-3 py-1.5 text-sm font-medium">
-                Entrar
-              </Link>
-            )}
+            <div className="flex items-center gap-1">
+              {profile?.role === "admin" && (
+                <Link href="/admin" className="grid h-10 w-10 place-items-center rounded-xl text-muted hover:text-fg" aria-label="Administración">
+                  <ShieldIcon />
+                </Link>
+              )}
+              {profile ? (
+                <form action={signOut}>
+                  <button className="grid h-10 w-10 place-items-center rounded-xl text-muted hover:text-fg" aria-label="Salir">
+                    <LogOutIcon className="h-6 w-6" />
+                  </button>
+                </form>
+              ) : (
+                <Link href="/login" className="grid h-10 w-10 place-items-center rounded-xl text-muted hover:text-fg" aria-label="Entrar">
+                  <LogInIcon className="h-6 w-6" />
+                </Link>
+              )}
+            </div>
           </div>
-          <nav className="mx-auto flex max-w-3xl gap-1 overflow-x-auto px-2 pb-2 text-sm font-medium">
-            <NavLink href="/">Inicio</NavLink>
-            <NavLink href="/ranking/masculino">Masculino</NavLink>
-            <NavLink href="/ranking/femenino">Femenino</NavLink>
-            {profile?.role === "admin" && <NavLink href="/admin">Admin</NavLink>}
-          </nav>
+          <NavTabs myTeamId={profile?.team_id ?? null} pendingCount={pendingCount} />
         </header>
-        <main className="mx-auto max-w-3xl px-4 py-4 pb-16">{children}</main>
+        <main className="mx-auto max-w-3xl px-4 py-5 pb-16">{children}</main>
       </body>
     </html>
-  );
-}
-
-function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <Link href={href} className="whitespace-nowrap rounded-lg px-3 py-1.5 hover:bg-white/15">
-      {children}
-    </Link>
   );
 }

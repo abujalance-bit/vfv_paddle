@@ -47,13 +47,13 @@ export default async function MatchPage({
 
   return (
     <div className="space-y-4">
-      <Link href="/" className="text-sm text-brand-700">
+      <Link href="/resultados" className="text-sm text-lime">
         ← Volver
       </Link>
       <Flash {...flash} />
 
       <section className="card">
-        <div className="mb-3 flex items-center justify-between text-xs text-gray-500">
+        <div className="mb-3 flex items-center justify-between text-xs text-muted">
           <span>
             {group?.name} · {period && periodLabel(period)}
           </span>
@@ -61,27 +61,27 @@ export default async function MatchPage({
         </div>
         <div className="space-y-1 text-lg">
           <div className={match.winner_team_id === home.id ? "font-bold" : ""}>{home.name}</div>
-          <div className="text-xs text-gray-400">vs</div>
+          <div className="text-xs text-muted">vs</div>
           <div className={match.winner_team_id === away.id ? "font-bold" : ""}>{away.name}</div>
         </div>
         {match.status !== "pending" && (
-          <div className="mt-3 space-y-1 border-t border-gray-100 pt-3 text-sm">
+          <div className="mt-3 space-y-1 border-t border-line pt-3 text-sm">
             <p className="font-mono text-base">{formatResult(match)}</p>
             {match.played_on && (
-              <p className="text-gray-500">Jugado el {new Date(match.played_on).toLocaleDateString("es-ES")}</p>
+              <p className="text-muted">Jugado el {new Date(match.played_on).toLocaleDateString("es-ES")}</p>
             )}
             {match.home_players && (
-              <p className="text-gray-600">
+              <p className="text-muted">
                 {home.name}: {match.home_players.map(playerName).join(" y ")}
               </p>
             )}
             {match.away_players && (
-              <p className="text-gray-600">
+              <p className="text-muted">
                 {away.name}: {match.away_players.map(playerName).join(" y ")}
               </p>
             )}
             {match.status === "disputed" && match.dispute_reason && (
-              <p className="text-red-700">Motivo del rechazo: {match.dispute_reason}</p>
+              <p className="text-down">Motivo del rechazo: {match.dispute_reason}</p>
             )}
           </div>
         )}
@@ -104,12 +104,12 @@ export default async function MatchPage({
             />
           </div>
           <button className="btn w-full">Enviar resultado</button>
-          <p className="text-xs text-gray-500">El equipo rival recibirá un aviso para confirmarlo.</p>
+          <p className="text-xs text-muted">El equipo rival recibirá un aviso para confirmarlo.</p>
         </form>
       )}
 
       {isMine && isOpen && match.status === "reported" && !reportedByMe && (
-        <section className="card space-y-3 ring-2 ring-amber-300">
+        <section className="card space-y-3 ring-2 ring-amber-400/50">
           <h2 className="h2">¿Es correcto este resultado?</h2>
           <form action={confirmResult.bind(null, match.id)}>
             <button className="btn w-full">✓ Sí, confirmar</button>
@@ -123,7 +123,7 @@ export default async function MatchPage({
 
       {isMine && isOpen && match.status === "reported" && reportedByMe && (
         <section className="card space-y-3">
-          <p className="text-sm text-gray-600">Esperando a que el equipo rival confirme el resultado.</p>
+          <p className="text-sm text-muted">Esperando a que el equipo rival confirme el resultado.</p>
           <form action={withdrawResult.bind(null, match.id)}>
             <button className="btn-secondary w-full">Retirar resultado para corregirlo</button>
           </form>
@@ -131,7 +131,7 @@ export default async function MatchPage({
       )}
 
       {match.status === "disputed" && isMine && (
-        <p className="card text-sm text-gray-600">El administrador revisará este partido y pondrá el resultado.</p>
+        <p className="card text-sm text-muted">El administrador revisará este partido y pondrá el resultado.</p>
       )}
 
       {profile?.role === "admin" && (

@@ -24,7 +24,7 @@ export default async function CloseMonthPage({ searchParams }: { searchParams: P
     return (
       <section key={r.id} className="space-y-3">
         <h2 className="text-lg font-bold">{r.name}</h2>
-        {used.length === 0 && <p className="text-sm text-gray-500">Sin grupos con equipos.</p>}
+        {used.length === 0 && <p className="text-sm text-muted">Sin grupos con equipos.</p>}
         {used.map((g, idx) => {
           const rows = computeStandings(
             teams,
@@ -35,15 +35,15 @@ export default async function CloseMonthPage({ searchParams }: { searchParams: P
           if (blocking) blockingTies++;
           const tied = rows.filter((x) => rows.some((y) => y !== x && y.points === x.points));
           return (
-            <div key={g.id} className={`card ${blocking ? "ring-2 ring-amber-300" : ""}`}>
+            <div key={g.id} className={`card ${blocking ? "ring-2 ring-amber-400/50" : ""}`}>
               <h3 className="h2 mb-2">{g.name}</h3>
               <StandingsTable rows={rows} canGoUp={idx > 0} canGoDown={idx < used.length - 1} showTies />
               {tied.length > 0 && (
-                <form action={saveTiebreaks.bind(null, g.id)} className="mt-3 space-y-2 border-t border-gray-100 pt-3">
+                <form action={saveTiebreaks.bind(null, g.id)} className="mt-3 space-y-2 border-t border-line pt-3">
                   <p className="text-sm font-medium">
-                    Desempate manual {blocking && <span className="text-amber-700">(obligatorio: decide quién sube/baja)</span>}
+                    Desempate manual {blocking && <span className="text-amber-300">(obligatorio: decide quién sube/baja)</span>}
                   </p>
-                  <p className="text-xs text-gray-500">Entre los empatados a puntos, pon 1 al que va por delante, 2 al siguiente...</p>
+                  <p className="text-xs text-muted">Entre los empatados a puntos, pon 1 al que va por delante, 2 al siguiente...</p>
                   {tied.map((x) => (
                     <div key={x.team.id} className="flex items-center gap-2">
                       <span className="flex-1 truncate text-sm">
@@ -77,12 +77,12 @@ export default async function CloseMonthPage({ searchParams }: { searchParams: P
       <Flash {...flash} />
 
       {unresolved.length > 0 && (
-        <div className="card ring-2 ring-red-200">
+        <div className="card ring-2 ring-down/40">
           <p className="text-sm">
             Quedan <strong>{unresolved.length}</strong> partido(s) sin cerrar (por jugar, por confirmar o en revisión).
             Entra en cada uno y pon el resultado, dalo como no presentado o anúlalo.
           </p>
-          <Link href="/admin/partidos" className="mt-2 inline-block text-sm font-medium text-brand-700">
+          <Link href="/admin/partidos" className="mt-2 inline-block text-sm font-medium text-lime">
             Ir a partidos →
           </Link>
         </div>
@@ -91,7 +91,7 @@ export default async function CloseMonthPage({ searchParams }: { searchParams: P
       {sections}
 
       <form action={closeMonth} className="card space-y-2">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted">
           Al cerrar, el primero de cada grupo sube (▲) y el último baja (▼). Se abre el mes siguiente con los partidos ya
           generados. Esta acción no se puede deshacer.
         </p>

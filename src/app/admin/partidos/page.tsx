@@ -33,7 +33,7 @@ export default async function AdminMatchesPage({ searchParams }: { searchParams:
             key={f}
             href={`/admin/partidos?estado=${f}`}
             className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium ring-1 ${
-              f === estado ? "bg-brand-600 text-white ring-brand-600" : "bg-white text-gray-700 ring-gray-300"
+              f === estado ? "bg-lime text-ink ring-lime" : "bg-panel text-fg/85 ring-line"
             }`}
           >
             {f === "todos" ? "Todos" : STATUS_LABEL[f]}
@@ -48,7 +48,7 @@ export default async function AdminMatchesPage({ searchParams }: { searchParams:
             const list = matches.filter((m) => m.group_id === g.id);
             if (list.length === 0) return null;
             return (
-              <section key={g.id} className="card">
+              <section key={g.id} className="card space-y-2">
                 <h2 className="h2 mb-1">
                   {r.name} · {g.name}
                 </h2>
@@ -59,7 +59,7 @@ export default async function AdminMatchesPage({ searchParams }: { searchParams:
             );
           }),
       )}
-      {matches.length === 0 && <p className="text-sm text-gray-500">No hay partidos con este filtro.</p>}
+      {matches.length === 0 && <p className="text-sm text-muted">No hay partidos con este filtro.</p>}
     </div>
   );
 }

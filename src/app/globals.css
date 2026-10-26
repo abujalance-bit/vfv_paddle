@@ -1,43 +1,56 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-50: #f0fdf4;
-  --color-brand-100: #dcfce7;
-  --color-brand-500: #16a34a;
-  --color-brand-600: #15803d;
-  --color-brand-700: #166534;
-  --color-brand-900: #052e16;
+  --color-ink: #0a0f1a;
+  --color-panel: #121a29;
+  --color-panel-2: #1a2436;
+  --color-line: #253046;
+  --color-fg: #eef2f8;
+  --color-muted: #8d99ad;
+  --color-lime: #c8f03c;
+  --color-up: #22c55e;
+  --color-down: #f05252;
+
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-archivo);
+}
+
+html {
+  color-scheme: dark;
 }
 
 body {
-  background: #f4f6f5;
-  color: #111827;
+  background: var(--color-ink);
+  color: var(--color-fg);
   -webkit-tap-highlight-color: transparent;
 }
 
 @layer components {
   .card {
-    @apply rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5;
+    @apply rounded-3xl border border-line bg-panel p-4;
   }
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white active:bg-brand-700 disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl bg-lime px-4 py-3 text-sm font-bold text-ink active:brightness-90 disabled:opacity-40;
   }
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-gray-800 ring-1 ring-gray-300 active:bg-gray-100;
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl border border-line bg-panel-2 px-4 py-3 text-sm font-semibold text-fg active:brightness-125 disabled:opacity-40;
   }
   .btn-danger {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white active:bg-red-700;
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl bg-down px-4 py-3 text-sm font-bold text-white active:brightness-90;
   }
   .input {
-    @apply w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-base outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100;
+    @apply w-full rounded-2xl border border-line bg-panel-2 px-3 py-2.5 text-base text-fg outline-none placeholder:text-muted focus:border-lime focus:ring-2 focus:ring-lime/20;
   }
   .label {
-    @apply mb-1 block text-sm font-medium text-gray-700;
+    @apply mb-1 block text-sm font-medium text-muted;
   }
   .h1 {
-    @apply text-xl font-bold text-gray-900;
+    @apply font-display text-2xl font-black uppercase tracking-tight text-fg;
   }
   .h2 {
-    @apply text-base font-semibold text-gray-900;
+    @apply font-display text-base font-extrabold uppercase tracking-wide text-fg;
+  }
+  .chip {
+    @apply whitespace-nowrap rounded-full border border-line bg-panel px-3 py-1.5 text-xs font-semibold text-fg;
   }
 }

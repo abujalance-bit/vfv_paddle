@@ -21,7 +21,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <Link
             key={l.href}
             href={l.href}
-            className="whitespace-nowrap rounded-full bg-white px-3 py-1.5 text-sm font-medium text-gray-800 ring-1 ring-gray-300"
+            className="whitespace-nowrap rounded-full bg-panel px-3 py-1.5 text-sm font-medium text-fg/85 ring-1 ring-line"
           >
             {l.label}
           </Link>

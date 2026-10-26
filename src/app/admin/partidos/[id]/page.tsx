@@ -32,7 +32,7 @@ export default async function AdminMatchPage({
 
   return (
     <div className="space-y-4">
-      <Link href="/admin/partidos" className="text-sm text-brand-700">
+      <Link href="/admin/partidos" className="text-sm text-lime">
         ← Partidos
       </Link>
       <Flash {...flash} />
@@ -45,9 +45,9 @@ export default async function AdminMatchPage({
           <StatusBadge status={match.status} />
         </div>
         {match.status !== "pending" && <p className="font-mono text-sm">{formatResult(match)}</p>}
-        {match.dispute_reason && <p className="text-sm text-red-700">Motivo del rechazo: {match.dispute_reason}</p>}
+        {match.dispute_reason && <p className="text-sm text-down">Motivo del rechazo: {match.dispute_reason}</p>}
         {match.reported_by_team_id && (
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-muted">
             Subido por {teams.find((t) => t.id === match.reported_by_team_id)?.name}
           </p>
         )}
@@ -64,22 +64,22 @@ export default async function AdminMatchPage({
           ].map(([value, label]) => (
             <label
               key={value}
-              className="flex items-center gap-2 rounded-xl px-3 py-2 ring-1 ring-gray-300 has-[:checked]:bg-brand-50 has-[:checked]:ring-brand-500"
+              className="flex items-center gap-2 rounded-xl px-3 py-2 ring-1 ring-line has-[:checked]:bg-lime/10 has-[:checked]:ring-lime"
             >
               <input
                 type="radio"
                 name="type"
                 value={value}
                 defaultChecked={value === (match.status === "pending" ? "normal" : match.result_type)}
-                className="accent-brand-600"
+                className="accent-lime"
               />
               {label}
             </label>
           ))}
         </fieldset>
 
-        <div className="space-y-4 rounded-xl bg-gray-50 p-3">
-          <p className="text-xs font-semibold uppercase text-gray-500">Si es resultado normal</p>
+        <div className="space-y-4 rounded-xl bg-panel-2 p-3">
+          <p className="text-xs font-semibold uppercase text-muted">Si es resultado normal</p>
           <SetsInputs home={home} away={away} initial={match.sets} />
           <PlayerPicker
             team={home}
@@ -95,14 +95,14 @@ export default async function AdminMatchPage({
           />
         </div>
 
-        <div className="space-y-2 rounded-xl bg-gray-50 p-3">
-          <p className="text-xs font-semibold uppercase text-gray-500">Si es no presentado: ¿quién gana?</p>
+        <div className="space-y-2 rounded-xl bg-panel-2 p-3">
+          <p className="text-xs font-semibold uppercase text-muted">Si es no presentado: ¿quién gana?</p>
           <select name="winner" className="input" defaultValue={match.winner_team_id ?? ""}>
             <option value="">—</option>
             <option value={home.id}>{home.name}</option>
             <option value={away.id}>{away.name}</option>
           </select>
-          <p className="text-xs text-gray-500">El ganador suma 3 puntos y el no presentado 0.</p>
+          <p className="text-xs text-muted">El ganador suma 3 puntos y el no presentado 0.</p>
         </div>
 
         <div>

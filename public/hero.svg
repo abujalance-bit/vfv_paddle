@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 560" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0c1626"/>
+      <stop offset="1" stop-color="#173659"/>
+    </linearGradient>
+    <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1d58a8"/>
+      <stop offset="1" stop-color="#2b78dc"/>
+    </linearGradient>
+    <linearGradient id="turf" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2f8f3e"/>
+      <stop offset="1" stop-color="#4fb84a"/>
+    </linearGradient>
+    <pattern id="mesh" width="14" height="14" patternUnits="userSpaceOnUse">
+      <path d="M0 0L14 14M14 0L0 14" stroke="#9fb6d4" stroke-opacity=".18" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="800" height="560" fill="url(#sky)"/>
+  <!-- edificios de fondo -->
+  <path d="M430 250V150h70v-30h60v40h50v-20h90v110z" fill="#20334f"/>
+  <path d="M600 250V95h40v-25h50v180z" fill="#1a2b45"/>
+  <!-- valla metálica -->
+  <rect x="0" y="120" width="800" height="200" fill="url(#mesh)"/>
+  <!-- postes y cristales -->
+  <g stroke="#0b1322" stroke-width="10">
+    <path d="M110 110V330M330 120V320M560 115V325M760 60V470"/>
+  </g>
+  <rect x="0" y="235" width="800" height="90" fill="#9fc3ea" fill-opacity=".07"/>
+  <!-- focos -->
+  <g stroke="#2c3f5c" stroke-width="5" fill="none">
+    <path d="M690 260V80q0-20 25-25"/>
+  </g>
+  <rect x="705" y="45" width="34" height="12" rx="3" fill="#e9f1ff"/>
+  <!-- suelo de la pista en perspectiva -->
+  <path d="M-40 560L150 320H700L880 560z" fill="url(#floor)"/>
+  <g stroke="#f4f8ff" stroke-opacity=".9" fill="none">
+    <path d="M150 320H700" stroke-width="3"/>
+    <path d="M88 400H758" stroke-width="3"/>
+    <path d="M425 320L425 400L425 560" stroke-width="3"/>
+    <path d="M-10 520H850" stroke-width="4"/>
+  </g>
+  <!-- red -->
+  <path d="M40 455H800" stroke="#0b1322" stroke-width="6"/>
+  <rect x="40" y="430" width="760" height="25" fill="url(#mesh)"/>
+  <path d="M40 430H800" stroke="#f4f8ff" stroke-width="3"/>
+  <!-- césped -->
+  <path d="M560 560L800 440V560z" fill="url(#turf)"/>
+</svg>

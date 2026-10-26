@@ -19,7 +19,7 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
         <Flash {...flash} />
         <form action={startPeriod} className="card space-y-3">
           <h2 className="h2">Iniciar mes</h2>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted">
             No hay ningún mes abierto. Inicia uno y después asigna los equipos a sus grupos (los partidos se generan
             solos).
           </p>
@@ -67,30 +67,30 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
       </div>
 
       {disputed.length > 0 && (
-        <section className="card ring-2 ring-red-200">
+        <section className="card space-y-2 ring-2 ring-down/40">
           <h2 className="h2 mb-1">⚠️ Resultados rechazados</h2>
-          <p className="mb-1 text-sm text-gray-600">El rival no está de acuerdo. Entra y pon el resultado correcto.</p>
+          <p className="mb-1 text-sm text-muted">El rival no está de acuerdo. Entra y pon el resultado correcto.</p>
           {disputed.map((m) => (
             <MatchRow key={m.id} match={m} teams={teams} href={`/admin/partidos/${m.id}`} />
           ))}
         </section>
       )}
 
-      <section className="card space-y-2 text-sm text-gray-700">
+      <section className="card space-y-2 text-sm text-fg/85">
         <h2 className="h2">Cómo funciona</h2>
         <ol className="list-decimal space-y-1 pl-5">
           <li>
-            Crea los <Link className="text-brand-700 underline" href="/admin/grupos">grupos</Link> de cada ranking
+            Crea los <Link className="text-lime underline" href="/admin/grupos">grupos</Link> de cada ranking
             (Grupo 1 es el más alto).
           </li>
           <li>
-            Crea los <Link className="text-brand-700 underline" href="/admin/equipos">equipos</Link> con sus 3
+            Crea los <Link className="text-lime underline" href="/admin/equipos">equipos</Link> con sus 3
             jugadores, usuario y contraseña, y asígnalos a un grupo.
           </li>
           <li>Los equipos suben sus resultados y el rival los confirma.</li>
           <li>
             A final de mes, resuelve los pendientes y{" "}
-            <Link className="text-brand-700 underline" href="/admin/mes">cierra el mes</Link>.
+            <Link className="text-lime underline" href="/admin/mes">cierra el mes</Link>.
           </li>
         </ol>
       </section>
@@ -100,9 +100,9 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
 
 function Stat({ label, value, alert }: { label: string; value: number; alert?: boolean }) {
   return (
-    <div className={`card text-center ${alert && value > 0 ? "ring-2 ring-red-300" : ""}`}>
+    <div className={`card text-center ${alert && value > 0 ? "ring-2 ring-down/40" : ""}`}>
       <div className="text-2xl font-bold">{value}</div>
-      <div className="text-xs text-gray-500">{label}</div>
+      <div className="text-xs text-muted">{label}</div>
     </div>
   );
 }

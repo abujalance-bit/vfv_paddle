@@ -24,7 +24,7 @@ export default async function GroupsPage({ searchParams }: { searchParams: Promi
   return (
     <div className="space-y-4">
       <h1 className="h1">Grupos</h1>
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-muted">
         {period ? `Equipos en ${periodLabel(period)}` : "No hay mes abierto: puedes crear grupos, pero no asignar equipos."}
       </p>
       <Flash {...flash} />
@@ -61,23 +61,23 @@ export default async function GroupsPage({ searchParams }: { searchParams: Promi
                   </div>
                   <ul className="text-sm">
                     {gTeams.map((t) => (
-                      <li key={t.id} className="flex items-center justify-between border-t border-gray-100 py-1.5">
+                      <li key={t.id} className="flex items-center justify-between border-t border-line py-1.5">
                         <span>{t.name}</span>
                         <form action={setTeamGroup.bind(null, t.id)}>
                           <input type="hidden" name="return_to" value="/admin/grupos" />
                           <input type="hidden" name="group_id" value="" />
-                          <button className="text-xs text-red-600">quitar</button>
+                          <button className="text-xs text-down">quitar</button>
                         </form>
                       </li>
                     ))}
-                    {gTeams.length === 0 && <li className="text-gray-500">Sin equipos</li>}
+                    {gTeams.length === 0 && <li className="text-muted">Sin equipos</li>}
                   </ul>
-                  <p className={`text-xs ${gTeams.length === 4 ? "text-gray-500" : "text-amber-700"}`}>
+                  <p className={`text-xs ${gTeams.length === 4 ? "text-muted" : "text-amber-300"}`}>
                     {gTeams.length} de 4 equipos
                   </p>
                   {gTeams.length === 0 && (
                     <form action={deleteGroup.bind(null, g.id)}>
-                      <button className="text-xs text-red-600">Borrar grupo</button>
+                      <button className="text-xs text-down">Borrar grupo</button>
                     </form>
                   )}
                 </div>
@@ -85,7 +85,7 @@ export default async function GroupsPage({ searchParams }: { searchParams: Promi
             })}
 
             {period && unassigned.length > 0 && (
-              <div className="card space-y-2 ring-2 ring-amber-200">
+              <div className="card space-y-2 ring-2 ring-amber-400/50">
                 <h3 className="font-semibold">Equipos sin grupo</h3>
                 {unassigned.map((t) => (
                   <form key={t.id} action={setTeamGroup.bind(null, t.id)} className="flex items-center gap-2">

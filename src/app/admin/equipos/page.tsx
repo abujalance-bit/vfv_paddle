@@ -89,7 +89,7 @@ export default async function TeamsPage({ searchParams }: { searchParams: Promis
             <h2 className="h2 mb-1">
               {r.name} ({list.length})
             </h2>
-            {list.length === 0 && <p className="text-sm text-gray-500">Sin equipos.</p>}
+            {list.length === 0 && <p className="text-sm text-muted">Sin equipos.</p>}
             {list.map((t) => {
               const entry = entries.find((e) => e.team_id === t.id);
               const group = groups.find((g) => g.id === entry?.group_id);
@@ -97,20 +97,20 @@ export default async function TeamsPage({ searchParams }: { searchParams: Promis
                 <Link
                   key={t.id}
                   href={`/admin/equipos/${t.id}`}
-                  className="flex items-center justify-between gap-2 border-t border-gray-100 py-2.5 text-sm"
+                  className="flex items-center justify-between gap-2 border-t border-line py-2.5 text-sm"
                 >
                   <div className="min-w-0">
                     <div className="truncate font-medium">
-                      {t.name} {!t.active && <span className="text-xs text-red-600">(inactivo)</span>}
+                      {t.name} {!t.active && <span className="text-xs text-down">(inactivo)</span>}
                     </div>
-                    <div className="truncate text-xs text-gray-500">
+                    <div className="truncate text-xs text-muted">
                       {players
                         .filter((p) => p.team_id === t.id)
                         .map((p) => p.name)
                         .join(", ")}
                     </div>
                   </div>
-                  <div className="text-right text-xs text-gray-500">
+                  <div className="text-right text-xs text-muted">
                     <div>{group?.name ?? "Sin grupo"}</div>
                     <div>@{profiles.find((p) => p.team_id === t.id)?.username ?? "—"}</div>
                   </div>
