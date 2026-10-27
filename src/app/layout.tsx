@@ -15,10 +15,32 @@ import { LogOutIcon, ShieldIcon } from "@/components/Icons";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const archivo = Archivo({ subsets: ["latin"], weight: ["700", "800", "900"], variable: "--font-archivo" });
 
+const TITLE = "Ranking Equipos VFV";
+const DESCRIPTION = "Clasificación, grupos y resultados de la liga de pádel por equipos VFV";
+
+// WhatsApp y compañía necesitan la URL absoluta de la imagen de la vista previa
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "http://localhost:3000");
+
 export const metadata: Metadata = {
-  title: "Ranking Equipos VFV",
-  description: "Clasificación, grupos y resultados de la liga de pádel por equipos VFV",
+  metadataBase: new URL(SITE_URL),
+  title: TITLE,
+  description: DESCRIPTION,
   appleWebApp: { capable: true, title: "Ranking VFV", statusBarStyle: "black-translucent" },
+  openGraph: {
+    type: "website",
+    locale: "es_ES",
+    siteName: TITLE,
+    title: TITLE,
+    description: DESCRIPTION,
+    images: [{ url: LOGO_SRC, width: 192, height: 192, alt: "Pádel X4" }],
+  },
+  twitter: { card: "summary", title: TITLE, description: DESCRIPTION, images: [LOGO_SRC] },
 };
 
 export const viewport: Viewport = {

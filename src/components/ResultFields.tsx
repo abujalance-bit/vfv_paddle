@@ -1,7 +1,18 @@
 import type { Player, Team } from "@/lib/types";
 
 // Campos de marcador por sets: s1h/s1a, s2h/s2a, s3h/s3a
-export function SetsInputs({ home, away, initial }: { home: Team; away: Team; initial?: [number, number][] | null }) {
+export function SetsInputs({
+  home,
+  away,
+  initial,
+  showTieBreakHint = false,
+}: {
+  home: Team;
+  away: Team;
+  initial?: [number, number][] | null;
+  // La aclaración del super tie-break solo la ve el admin
+  showTieBreakHint?: boolean;
+}) {
   return (
     <div>
       <div className="grid grid-cols-[1fr_repeat(3,3.5rem)] items-center gap-2 text-sm">
@@ -30,7 +41,9 @@ export function SetsInputs({ home, away, initial }: { home: Team; away: Team; in
           </div>
         ))}
       </div>
-      <p className="mt-1 text-xs text-muted">El tercer set solo si hizo falta (vale también un super tie-break, p. ej. 10-8).</p>
+      {showTieBreakHint && (
+        <p className="mt-1 text-xs text-muted">El tercer set solo si hizo falta (vale también un super tie-break, p. ej. 10-8).</p>
+      )}
     </div>
   );
 }

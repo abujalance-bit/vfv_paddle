@@ -4,6 +4,7 @@ import { addDays, PERIOD_STATUS_LABEL, periodLabel, type Period } from "@/lib/ty
 import { Flash, type FlashParams } from "@/components/Flash";
 import { PeriodDates } from "@/components/PeriodDates";
 import { PhaseCountdown } from "@/components/PhaseCountdown";
+import { DeleteBox } from "@/components/DeleteBox";
 import { createPeriod, deletePeriod, openPeriod, updatePeriod } from "../actions";
 
 const STATUS_STYLE: Record<Period["status"], string> = {
@@ -22,8 +23,13 @@ export default async function PeriodsPage({ searchParams }: { searchParams: Prom
   const nextStart = latest ? addDays(latest.end_date, 1) : new Date().toISOString().slice(0, 10);
 
   // Partidos por fase, para avisar de lo que se pierde al borrar
-  const { data: matchRows } = await db.from("matches").select("period_id");
-  const matchCount = (id: string) => (matchRows ?? []).filter((m) => m.period_id === id).length;
+  const [{ data: matchRows }, { data: entryRows }] = await Promise.all([
+    db.from("matches").select("period_id, status"),
+    db.from("group_entries").select("period_id"),
+  ]);
+  const matchCount = (id: string, played: boolean) =>
+    (matchRows ?? []).filter((m) => m.period_id === id && (m.status !== "pending") === played).length;
+  const entryCount = (id: string) => (entryRows ?? []).filter((e) => e.period_id === id).length;
 
   return (
     <div className="space-y-4">
@@ -83,20 +89,16 @@ export default async function PeriodsPage({ searchParams }: { searchParams: Prom
             </form>
           )}
 
-          <details className="rounded-2xl border border-down/30 p-3">
-            <summary className="cursor-pointer text-sm font-semibold text-down">Borrar fase</summary>
-            <form action={deletePeriod.bind(null, p.id)} className="mt-3 space-y-3">
-              <p className="text-sm text-muted">
-                Se borran sus grupos de esa fase y sus {matchCount(p.id)} partido(s) con sus resultados. Los equipos y los
-                usuarios no se tocan.
-              </p>
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" name="confirm" className="h-4 w-4 accent-red-500" />
-                Sí, quiero borrar esta fase
-              </label>
-              <button className="btn-danger w-full">Borrar</button>
-            </form>
-          </details>
+          <DeleteBox
+            title="Borrar fase"
+            action={deletePeriod.bind(null, p.id)}
+            dependencies={[
+              [entryCount(p.id), "equipo(s) asignados a grupos en esta fase"],
+              [matchCount(p.id, true), "partido(s) con resultado"],
+              [matchCount(p.id, false), "partido(s) por jugar"],
+            ]}
+            note="Los equipos, los grupos y los usuarios no se tocan."
+          />
         </section>
       ))}
     </div>

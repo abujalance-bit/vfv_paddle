@@ -2,6 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getOpenPeriod, getRankings } from "@/lib/data";
 import { periodLabel, type Group, type GroupEntry, type Team } from "@/lib/types";
 import { Flash, type FlashParams } from "@/components/Flash";
+import { DeleteBox } from "@/components/DeleteBox";
 import { createGroup, deleteGroup, moveGroup, renameGroup, setTeamGroup } from "../actions";
 
 export default async function GroupsPage({ searchParams }: { searchParams: Promise<FlashParams> }) {
@@ -10,12 +11,15 @@ export default async function GroupsPage({ searchParams }: { searchParams: Promi
   const period = await getOpenPeriod(db);
   const rankings = await getRankings(db);
 
-  const [{ data: groupsData }, { data: teamsData }, entriesRes] = await Promise.all([
+  const [{ data: groupsData }, { data: teamsData }, entriesRes, { data: allMatches }, { data: allEntries }] = await Promise.all([
     db.from("groups").select("*").order("level"),
     db.from("teams").select("*").order("name"),
     period
       ? db.from("group_entries").select("*").eq("period_id", period.id)
       : Promise.resolve({ data: [] as GroupEntry[] }),
+    // Para avisar de lo que se pierde al borrar un grupo
+    db.from("matches").select("group_id, status"),
+    db.from("group_entries").select("group_id, period_id"),
   ]);
   const groups = (groupsData ?? []) as Group[];
   const teams = (teamsData ?? []) as Team[];
@@ -75,11 +79,27 @@ export default async function GroupsPage({ searchParams }: { searchParams: Promi
                   <p className={`text-xs ${gTeams.length === 4 ? "text-muted" : "text-amber-300"}`}>
                     {gTeams.length} de 4 equipos
                   </p>
-                  {gTeams.length === 0 && (
-                    <form action={deleteGroup.bind(null, g.id)}>
-                      <button className="text-xs text-down">Borrar grupo</button>
-                    </form>
-                  )}
+                  <DeleteBox
+                    compact
+                    title="Borrar grupo"
+                    action={deleteGroup.bind(null, g.id)}
+                    dependencies={[
+                      [gTeams.length, "equipo(s) en la fase en juego (se quedan sin grupo)"],
+                      [
+                        (allMatches ?? []).filter((m) => m.group_id === g.id && m.status !== "pending").length,
+                        "partido(s) con resultado",
+                      ],
+                      [
+                        (allMatches ?? []).filter((m) => m.group_id === g.id && m.status === "pending").length,
+                        "partido(s) por jugar",
+                      ],
+                      [
+                        (allEntries ?? []).filter((e) => e.group_id === g.id && e.period_id !== period?.id).length,
+                        "puesto(s) de la clasificación de fases anteriores",
+                      ],
+                    ]}
+                    note="Los equipos no se borran. Los grupos de debajo suben un nivel."
+                  />
                 </div>
               );
             })}

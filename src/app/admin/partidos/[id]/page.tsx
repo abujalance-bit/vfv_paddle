@@ -6,7 +6,8 @@ import type { Match, Player, Team } from "@/lib/types";
 import { StatusBadge } from "@/components/MatchRow";
 import { Flash, type FlashParams } from "@/components/Flash";
 import { PlayerPicker, SetsInputs } from "@/components/ResultFields";
-import { setResult } from "../../actions";
+import { DeleteBox } from "@/components/DeleteBox";
+import { deleteMatch, setResult } from "../../actions";
 
 export default async function AdminMatchPage({
   params,
@@ -80,7 +81,7 @@ export default async function AdminMatchPage({
 
         <div className="space-y-4 rounded-xl bg-panel-2 p-3">
           <p className="text-xs font-semibold uppercase text-muted">Si es resultado normal</p>
-          <SetsInputs home={home} away={away} initial={match.sets} />
+          <SetsInputs home={home} away={away} initial={match.sets} showTieBreakHint />
           <PlayerPicker
             team={home}
             players={players.filter((p) => p.team_id === home.id)}
@@ -111,6 +112,13 @@ export default async function AdminMatchPage({
         </div>
         <button className="btn w-full">Guardar</button>
       </form>
+
+      <DeleteBox
+        title="Borrar partido"
+        action={deleteMatch.bind(null, match.id)}
+        dependencies={[[match.status === "pending" ? 0 : 1, "resultado ya puesto (deja de contar en la clasificación)"]]}
+        note="Para quitar solo el resultado usa «Dejar pendiente». Si luego cambias algún equipo de este grupo, el partido se vuelve a crear vacío."
+      />
     </div>
   );
 }

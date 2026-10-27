@@ -21,6 +21,11 @@ function done(path: string, message: string): never {
 
 const str = (formData: FormData, key: string) => String(formData.get(key) ?? "").trim();
 
+// Los borrados piden marcar la casilla de <DeleteBox />
+function requireConfirm(formData: FormData, path: string) {
+  if (formData.get("confirm") !== "on") back(path, "error", "Marca la casilla para confirmar el borrado");
+}
+
 // ---------------------------------------------------------------- Fases
 
 function readDates(formData: FormData, path: string) {
@@ -82,7 +87,7 @@ export async function openPeriod(periodId: string) {
 export async function deletePeriod(periodId: string, formData: FormData) {
   const db = await adminClient();
   const path = "/admin/fases";
-  if (formData.get("confirm") !== "on") back(path, "error", "Marca la casilla para confirmar el borrado");
+  requireConfirm(formData, path);
   const { error } = await db.from("periods").delete().eq("id", periodId);
   if (error) back(path, "error", error.message);
   done(path, "Fase borrada");
@@ -193,11 +198,31 @@ export async function renameGroup(groupId: string, formData: FormData) {
   done("/admin/grupos", "Grupo renombrado");
 }
 
-export async function deleteGroup(groupId: string) {
+// Borra el grupo con sus partidos y su historial en todas las fases, y recoloca los niveles
+export async function deleteGroup(groupId: string, formData: FormData) {
   const db = await adminClient();
+  const path = "/admin/grupos";
+  requireConfirm(formData, path);
+  const { data: g } = await db.from("groups").select("*").eq("id", groupId).single<Group>();
+  if (!g) back(path, "error", "Grupo no encontrado");
+
+  const { error: matchesError } = await db.from("matches").delete().eq("group_id", groupId);
+  if (matchesError) back(path, "error", matchesError.message);
+  const { error: entriesError } = await db.from("group_entries").delete().eq("group_id", groupId);
+  if (entriesError) back(path, "error", entriesError.message);
   const { error } = await db.from("groups").delete().eq("id", groupId);
-  if (error) back("/admin/grupos", "error", "No se puede borrar un grupo que tiene equipos o historial");
-  done("/admin/grupos", "Grupo borrado");
+  if (error) back(path, "error", error.message);
+
+  // Sube un nivel los grupos de debajo para no dejar huecos (de arriba abajo, por el unique)
+  const { data: below } = await db
+    .from("groups")
+    .select("id, level")
+    .eq("ranking_id", g.ranking_id)
+    .gt("level", g.level)
+    .order("level");
+  for (const b of below ?? []) await db.from("groups").update({ level: b.level - 1 }).eq("id", b.id);
+
+  done(path, `Grupo "${g.name}" borrado`);
 }
 
 // Intercambia el nivel con el grupo de arriba (-1) o de abajo (+1)
@@ -310,8 +335,8 @@ export async function updateTeam(teamId: string, formData: FormData) {
     if (!key.startsWith("player_")) continue;
     const playerId = key.slice(7);
     const playerName = String(value).trim();
+    // Para quitar un jugador está deletePlayer, que avisa de sus partidos
     if (playerName) await db.from("players").update({ name: playerName }).eq("id", playerId).eq("team_id", teamId);
-    else await db.from("players").delete().eq("id", playerId).eq("team_id", teamId);
   }
   const newPlayer = str(formData, "new_player");
   if (newPlayer) await db.from("players").insert({ team_id: teamId, name: newPlayer, position: 9 });
@@ -342,7 +367,64 @@ export async function resetPassword(teamId: string, formData: FormData) {
   done(path, "Contraseña cambiada");
 }
 
+// Borra el equipo con sus jugadores, su usuario, sus partidos y su historial
+export async function deleteTeam(teamId: string, formData: FormData) {
+  const db = await adminClient();
+  requireConfirm(formData, `/admin/equipos/${teamId}`);
+  const path = "/admin/equipos";
+  const { data: team } = await db.from("teams").select("name").eq("id", teamId).maybeSingle();
+  if (!team) back(path, "error", "Equipo no encontrado");
+
+  const { error: matchesError } = await db
+    .from("matches")
+    .delete()
+    .or(`home_team_id.eq.${teamId},away_team_id.eq.${teamId}`);
+  if (matchesError) back(path, "error", matchesError.message);
+  const { error: entriesError } = await db.from("group_entries").delete().eq("team_id", teamId);
+  if (entriesError) back(path, "error", entriesError.message);
+
+  // Al borrar el usuario de Auth se borra su perfil
+  const { data: profiles } = await db.from("profiles").select("id").eq("team_id", teamId);
+  for (const p of profiles ?? []) {
+    const { error } = await db.auth.admin.deleteUser(p.id);
+    if (error) back(path, "error", `No se pudo borrar el usuario: ${error.message}`);
+  }
+
+  const { error } = await db.from("teams").delete().eq("id", teamId);
+  if (error) back(path, "error", error.message);
+  done(path, `Equipo "${team.name}" borrado`);
+}
+
+// Borra un jugador y lo quita de las alineaciones de los partidos en que salió
+export async function deletePlayer(teamId: string, playerId: string, formData: FormData) {
+  const db = await adminClient();
+  const path = `/admin/equipos/${teamId}`;
+  requireConfirm(formData, path);
+  for (const side of ["home_players", "away_players"] as const) {
+    const { data: rows } = await db.from("matches").select(`id, ${side}`).contains(side, [playerId]);
+    for (const row of (rows ?? []) as Record<string, unknown>[]) {
+      const list = ((row[side] as string[] | null) ?? []).filter((id) => id !== playerId);
+      await db
+        .from("matches")
+        .update({ [side]: list.length ? list : null })
+        .eq("id", row.id as string);
+    }
+  }
+  const { error } = await db.from("players").delete().eq("id", playerId).eq("team_id", teamId);
+  if (error) back(path, "error", error.message);
+  done(path, "Jugador/a borrado");
+}
+
 // ---------------------------------------------------------------- Partidos
+
+// Ojo: si luego se cambia algún equipo de ese grupo, el partido se vuelve a crear vacío
+export async function deleteMatch(matchId: string, formData: FormData) {
+  const db = await adminClient();
+  requireConfirm(formData, `/admin/partidos/${matchId}`);
+  const { error } = await db.from("matches").delete().eq("id", matchId);
+  if (error) back(`/admin/partidos/${matchId}`, "error", error.message);
+  done("/admin/partidos", "Partido borrado");
+}
 
 export async function setResult(matchId: string, formData: FormData) {
   const db = await adminClient();
