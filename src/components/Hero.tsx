@@ -2,7 +2,7 @@ import { HERO_SRC } from "@/lib/brand";
 
 type Stat = { label: string; value: number };
 
-export function Hero({ subtitle, stats }: { subtitle: string; stats: Stat[] }) {
+export function Hero({ subtitle, stats, badge }: { subtitle: string; stats: Stat[]; badge?: React.ReactNode }) {
   return (
     <section
       className="relative overflow-hidden rounded-[28px] border border-line bg-cover bg-center"
@@ -10,6 +10,7 @@ export function Hero({ subtitle, stats }: { subtitle: string; stats: Stat[] }) {
     >
       <div className="absolute inset-0 bg-gradient-to-r from-ink/95 via-ink/75 to-ink/30" />
       <div className="relative px-6 pb-7 pt-8 sm:px-10">
+        {badge && <div className="mb-4">{badge}</div>}
         <h1 className="font-display text-[38px] font-black uppercase leading-[0.95] tracking-tight sm:text-6xl">
           Ranking
           <br />

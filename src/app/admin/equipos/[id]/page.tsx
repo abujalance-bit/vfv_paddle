@@ -48,7 +48,10 @@ export default async function TeamEditPage({
         </div>
         {players.map((p, i) => (
           <div key={p.id}>
-            <label className="label">Jugador/a {i + 1} (vacío = quitar)</label>
+            <label className="label">
+              Jugador/a {i + 1}
+              {i === 0 && " · capitán/a"} (vacío = quitar)
+            </label>
             <input name={`player_${p.id}`} className="input" defaultValue={p.name} />
           </div>
         ))}

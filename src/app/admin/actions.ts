@@ -34,9 +34,58 @@ function readDates(formData: FormData, path: string) {
 export async function startPeriod(formData: FormData) {
   const db = await adminClient();
   const { start, end } = readDates(formData, "/admin");
-  const { error } = await db.from("periods").insert({ start_date: start, end_date: end });
+  const { error } = await db.from("periods").insert({ start_date: start, end_date: end, status: "open" });
   if (error) back("/admin", "error", error.message);
   done("/admin", "Fase iniciada. Ahora asigna los equipos a sus grupos.");
+}
+
+// Crea una fase programada (o abierta, si se marca y no hay otra en juego)
+export async function createPeriod(formData: FormData) {
+  const db = await adminClient();
+  const path = "/admin/fases";
+  const { start, end } = readDates(formData, path);
+  const openNow = formData.get("open_now") === "on";
+  if (openNow && (await getOpenPeriod(db))) back(path, "error", "Ya hay una fase en juego: ciérrala antes de abrir otra");
+  const { error } = await db.from("periods").insert({
+    start_date: start,
+    end_date: end,
+    status: openNow ? "open" : "planned",
+    visible: formData.get("visible") === "on",
+  });
+  if (error) back(path, "error", error.message);
+  done(path, openNow ? "Fase creada y abierta" : "Fase programada");
+}
+
+export async function updatePeriod(periodId: string, formData: FormData) {
+  const db = await adminClient();
+  const path = "/admin/fases";
+  const { start, end } = readDates(formData, path);
+  const { error } = await db
+    .from("periods")
+    .update({ start_date: start, end_date: end, visible: formData.get("visible") === "on" })
+    .eq("id", periodId);
+  if (error) back(path, "error", error.message);
+  done(path, "Fase guardada");
+}
+
+// Abre una fase programada cuando no hay ninguna en juego
+export async function openPeriod(periodId: string) {
+  const db = await adminClient();
+  const path = "/admin/fases";
+  if (await getOpenPeriod(db)) back(path, "error", "Ya hay una fase en juego");
+  const { error } = await db.from("periods").update({ status: "open" }).eq("id", periodId).eq("status", "planned");
+  if (error) back(path, "error", error.message);
+  done(path, "Fase abierta. Asigna los equipos a sus grupos.");
+}
+
+// Borra la fase con sus grupos de ese periodo y sus partidos
+export async function deletePeriod(periodId: string, formData: FormData) {
+  const db = await adminClient();
+  const path = "/admin/fases";
+  if (formData.get("confirm") !== "on") back(path, "error", "Marca la casilla para confirmar el borrado");
+  const { error } = await db.from("periods").delete().eq("id", periodId);
+  if (error) back(path, "error", error.message);
+  done(path, "Fase borrada");
 }
 
 export async function saveTiebreaks(groupId: string, formData: FormData) {
@@ -60,8 +109,9 @@ export async function closeMonth(formData: FormData) {
   const db = await adminClient();
   const period = await getOpenPeriod(db);
   if (!period) back("/admin/mes", "error", "No hay fase abierta");
-  const { start, end } = readDates(formData, "/admin/mes");
-  if (start <= period.end_date) back("/admin/mes", "error", "La nueva fase tiene que empezar después de que acabe la actual");
+  const nextChoice = str(formData, "next_id");
+  if (nextChoice === "new") readDates(formData, "/admin/mes");
+  else if (!nextChoice) back("/admin/mes", "error", "Elige la fase siguiente");
   await db.rpc("auto_confirm_expired");
 
   const { count } = await db
@@ -99,12 +149,20 @@ export async function closeMonth(formData: FormData) {
     }
   }
 
-  const { error } = await db.rpc("close_period", {
-    p_period: period.id,
-    p_results: results,
-    p_start: start,
-    p_end: end,
-  });
+  // La siguiente fase: una ya programada o una nueva con las fechas del formulario
+  let nextId = nextChoice;
+  if (nextChoice === "new") {
+    const { start, end } = readDates(formData, "/admin/mes");
+    const { data: created, error: createError } = await db
+      .from("periods")
+      .insert({ start_date: start, end_date: end, status: "planned" })
+      .select("id")
+      .single();
+    if (createError || !created) back("/admin/mes", "error", createError?.message ?? "No se pudo crear la fase");
+    nextId = created.id;
+  }
+
+  const { error } = await db.rpc("close_period", { p_period: period.id, p_results: results, p_next: nextId });
   if (error) back("/admin/mes", "error", error.message);
   done("/admin", "Fase cerrada. Se ha abierto la siguiente con los ascensos y descensos.");
 }

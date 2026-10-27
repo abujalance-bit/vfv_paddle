@@ -11,11 +11,13 @@ export async function getRankings(supabase: SupabaseClient) {
   return (data ?? []) as Ranking[];
 }
 
-// Fases de más reciente a más antigua, y el elegido (?periodo=) o el abierto por defecto
+// Fases jugadas o en juego (las programadas no se muestran), de más reciente a más antigua,
+// y la elegida (?periodo=) o la abierta por defecto. Las ocultas ya las filtra RLS salvo para el admin.
 export async function getPeriods(supabase: SupabaseClient, selectedId?: string) {
   const { data } = await supabase
     .from("periods")
     .select("*")
+    .neq("status", "planned")
     .order("start_date", { ascending: false })
     .limit(36);
   const periods = (data ?? []) as Period[];

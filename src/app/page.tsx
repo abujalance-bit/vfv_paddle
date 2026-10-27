@@ -4,6 +4,7 @@ import { computeStandings, isCounted } from "@/lib/standings";
 import { loadRankingPage, type RankingSearchParams } from "@/lib/ranking-page";
 import type { Announcement } from "@/lib/types";
 import { Hero } from "@/components/Hero";
+import { PhaseCountdown } from "@/components/PhaseCountdown";
 import { RankingFilters } from "@/components/RankingFilters";
 import { StandingsTable } from "@/components/StandingsTable";
 import { BellIcon, MegaphoneIcon } from "@/components/Icons";
@@ -45,6 +46,7 @@ export default async function ClassificationPage({ searchParams }: { searchParam
           { label: "Equipos", value: entries.length },
           { label: "Partidos", value: matches.filter(isCounted).length },
         ]}
+        badge={period && <PhaseCountdown period={period} />}
       />
 
       {toConfirm > 0 && profile?.team_id && (

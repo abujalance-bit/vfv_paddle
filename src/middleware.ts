@@ -22,11 +22,22 @@ export async function middleware(request: NextRequest) {
   );
 
   // Refresca la sesión si ha caducado
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // Sin sesión solo se puede ver la pantalla de entrar
+  if (!user && !request.nextUrl.pathname.startsWith("/login")) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
 
   return response;
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|icon.png|apple-icon.png|manifest.webmanifest).*)"],
+  // Fuera quedan los ficheros estáticos (logo, iconos, imágenes) que necesita la pantalla de entrar
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|.*\\.(?:png|jpg|jpeg|svg|webp|ico)$).*)"],
 };

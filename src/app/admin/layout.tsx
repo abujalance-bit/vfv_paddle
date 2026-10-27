@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 
 const LINKS = [
   { href: "/admin", label: "Panel" },
+  { href: "/admin/fases", label: "Fases" },
   { href: "/admin/equipos", label: "Equipos" },
   { href: "/admin/grupos", label: "Grupos" },
   { href: "/admin/partidos", label: "Partidos" },

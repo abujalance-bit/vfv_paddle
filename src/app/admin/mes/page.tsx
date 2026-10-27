@@ -2,11 +2,13 @@ import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getOpenPeriod, getRankings, loadRankingPeriod } from "@/lib/data";
 import { computeStandings, hasBlockingTie } from "@/lib/standings";
-import { addDays, daysBetween, periodLabel } from "@/lib/types";
+import { addDays, daysBetween, periodLabel, type Period } from "@/lib/types";
 import { PeriodDates } from "@/components/PeriodDates";
 import { Flash, type FlashParams } from "@/components/Flash";
 import { StandingsTable } from "@/components/StandingsTable";
 import { closeMonth, saveTiebreaks } from "../actions";
+
+const OPTION = "flex items-center gap-3 rounded-2xl border border-line p-3 text-sm has-[:checked]:border-lime has-[:checked]:bg-lime/5";
 
 export default async function CloseMonthPage({ searchParams }: { searchParams: Promise<FlashParams> }) {
   const flash = await searchParams;
@@ -16,6 +18,8 @@ export default async function CloseMonthPage({ searchParams }: { searchParams: P
 
   const rankings = await getRankings(db);
   const data = await Promise.all(rankings.map((r) => loadRankingPeriod(db, r.id, period.id)));
+  const { data: plannedData } = await db.from("periods").select("*").eq("status", "planned").order("start_date");
+  const planned = (plannedData ?? []) as Period[];
   const unresolved = data.flatMap((d) => d.matches).filter((m) => ["pending", "reported", "disputed"].includes(m.status));
   let blockingTies = 0;
 
@@ -80,7 +84,7 @@ export default async function CloseMonthPage({ searchParams }: { searchParams: P
       {unresolved.length > 0 && (
         <div className="card ring-2 ring-down/40">
           <p className="text-sm">
-            Quedan <strong>{unresolved.length}</strong> partido(s) sin cerrar (por jugar, por confirmar o en revisión). Los que lleven 5 días sin confirmar se dan por buenos solos.
+            Quedan <strong>{unresolved.length}</strong> partido(s) sin cerrar (por jugar, por confirmar o en revisión). Los que lleven 2 días sin confirmar se dan por buenos solos.
             Entra en cada uno y pon el resultado, dalo como no presentado o anúlalo.
           </p>
           <Link href="/admin/partidos" className="mt-2 inline-block text-sm font-medium text-lime">
@@ -93,13 +97,30 @@ export default async function CloseMonthPage({ searchParams }: { searchParams: P
 
       <form action={closeMonth} className="card space-y-3">
         <h2 className="h2">Siguiente fase</h2>
-        <PeriodDates
-          start={addDays(period.end_date, 1)}
-          end={addDays(period.end_date, 1 + daysBetween(period.start_date, period.end_date))}
-        />
+        {planned.map((p, i) => (
+          <label key={p.id} className={OPTION}>
+            <input type="radio" name="next_id" value={p.id} defaultChecked={i === 0} className="accent-lime" />
+            <span className="flex-1 font-semibold">{periodLabel(p)}</span>
+            <span className="text-xs text-muted">Programada{!p.visible && " · oculta"}</span>
+          </label>
+        ))}
+        <div className="space-y-3 rounded-2xl border border-line p-3 has-[:checked]:border-lime has-[:checked]:bg-lime/5">
+          <label className="flex items-center gap-3 text-sm font-semibold">
+            <input type="radio" name="next_id" value="new" defaultChecked={planned.length === 0} className="accent-lime" />
+            Nueva fase con estas fechas
+          </label>
+          <PeriodDates
+            start={addDays(period.end_date, 1)}
+            end={addDays(period.end_date, 1 + daysBetween(period.start_date, period.end_date))}
+          />
+        </div>
         <p className="text-sm text-muted">
-          Al cerrar, el primero de cada grupo sube y el último baja. Se abre la fase siguiente con esas fechas y los
-          partidos ya generados. Esta acción no se puede deshacer.
+          Al cerrar, el primero de cada grupo sube y el último baja. Se abre la fase elegida con los partidos ya generados.
+          Las fechas de las fases se pueden cambiar en{" "}
+          <Link href="/admin/fases" className="text-lime underline">
+            Fases
+          </Link>
+          . Esta acción no se puede deshacer.
         </p>
         <button className="btn w-full" disabled={!canClose}>
           Cerrar fase y abrir la siguiente

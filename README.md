@@ -4,8 +4,10 @@ App web (pensada para móvil) para gestionar la liga de pádel por rankings: gru
 
 - **Stack:** Next.js 15 + Tailwind 4, desplegado en Vercel. Base de datos y login en Supabase. Todo en plan gratuito.
 - **Rankings:** Masculino y Femenino, cada uno con los grupos que crees (Grupo 1 = el más alto).
-- **Fases:** cada fase tiene fecha de inicio y de fin (por ejemplo, del 19 oct al 14 nov). Al cerrar una fase, eliges las fechas de la siguiente.
-- **Plazo de confirmación:** si el rival no confirma ni rechaza un resultado en 5 días, se da por bueno.
+- **Acceso:** solo con usuario y contraseña. Sin sesión únicamente se ve la pantalla de entrar.
+- **Fases:** cada fase tiene fecha de inicio y de fin (por ejemplo, del 19 oct al 14 nov) y un contador de días restantes. En **Admin → Fases** se crean fases programadas, se cambian fechas, se ocultan o se borran. Al cerrar una fase eliges cuál se abre después.
+- **Plazo de confirmación:** si el rival no confirma ni rechaza un resultado en 2 días, se da por bueno.
+- **Capitán/a:** el primer jugador de cada equipo es su capitán o capitana.
 - **Notificaciones:** la campana avisa al rival cuando le suben un resultado, al equipo que lo subió cuando lo confirman o rechazan, y al admin cuando hay un rechazo.
 - **Puntos:** victoria 3, derrota 1, no presentado 0, partido anulado 0 y 0.
 - **Desempates:** los decide el admin a mano. Solo es obligatorio cuando el empate decide quién sube o quién baja.
@@ -14,9 +16,8 @@ App web (pensada para móvil) para gestionar la liga de pádel por rankings: gru
 
 | Quién | Qué puede hacer |
 |---|---|
-| Cualquiera (sin entrar) | Ver clasificaciones, partidos, histórico de fases y avisos |
-| Equipo (su usuario) | Subir el resultado de sus partidos (sets y los 2 jugadores de cada equipo), confirmar o rechazar lo que suba el rival, retirar un resultado suyo aún sin confirmar |
-| Admin | Todo: equipos, jugadores, usuarios y contraseñas, grupos, poner o corregir cualquier resultado, desempates, cerrar la fase y avisos |
+| Equipo (su usuario) | Ver clasificaciones, partidos, histórico de fases y avisos. Subir el resultado de sus partidos (sets y los 2 o 3 jugadores de cada equipo), confirmar o rechazar lo que suba el rival, retirar un resultado suyo aún sin confirmar |
+| Admin | Todo: equipos, jugadores, usuarios y contraseñas, grupos, fases, poner o corregir cualquier resultado, desempates, cerrar la fase y avisos |
 
 Cuando un equipo sube un resultado, al rival le sale un aviso destacado en Inicio. Si lo rechaza, el partido pasa a **En revisión** y aparece en el panel del admin.
 
@@ -30,7 +31,7 @@ Al **cerrar la fase**:
 ### 1. Supabase (base de datos)
 
 1. Crea una cuenta en <https://supabase.com> (puedes entrar con GitHub) y un proyecto nuevo. Región: **Europe (Frankfurt o Paris)**.
-2. Ve a **SQL Editor → New query**, pega el contenido de [`supabase/schema.sql`](supabase/schema.sql) y pulsa **Run**. Después haz lo mismo con [`supabase/002_fases_avisos.sql`](supabase/002_fases_avisos.sql).
+2. Ve a **SQL Editor → New query**, pega el contenido de [`supabase/schema.sql`](supabase/schema.sql) y pulsa **Run**. Después haz lo mismo, en este orden, con [`supabase/002_fases_avisos.sql`](supabase/002_fases_avisos.sql) y [`supabase/003_fases_login.sql`](supabase/003_fases_login.sql).
 3. Ve a **Authentication → Sign In / Providers → Email** y **desactiva "Allow new users to sign up"**. Los usuarios solo los crea el admin desde la app.
 4. Ve a **Project Settings → API Keys** y apunta:
    - Project URL (`https://xxxx.supabase.co`)
@@ -87,7 +88,8 @@ Se abre como una app más.
 
 ```
 supabase/schema.sql        Tablas, seguridad (RLS) y funciones (subir/confirmar resultado, cerrar fase)
-supabase/002_fases_avisos.sql  Fases por fechas, notificaciones y confirmación automática a los 5 días
+supabase/002_fases_avisos.sql  Fases por fechas, notificaciones y confirmación automática
+supabase/003_fases_login.sql   Copia de seguridad, plazo de 2 días, fases programadas/ocultas y lectura solo con sesión
 scripts/create-admin.mjs   Crea o actualiza el usuario administrador
 src/lib/standings.ts       Cálculo de la clasificación
 src/app/page.tsx           Clasificación pública por ranking y fase

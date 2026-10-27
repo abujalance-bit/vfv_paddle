@@ -9,7 +9,8 @@ import { LOGO_SRC } from "@/lib/brand";
 import { signOut } from "@/app/login/actions";
 import { NavTabs } from "@/components/NavTabs";
 import { runAutoConfirm } from "@/lib/auto-confirm";
-import { BellIcon, LogInIcon, LogOutIcon, ShieldIcon } from "@/components/Icons";
+import { NotificationBell } from "@/components/NotificationBell";
+import { LogOutIcon, ShieldIcon } from "@/components/Icons";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const archivo = Archivo({ subsets: ["latin"], weight: ["700", "800", "900"], variable: "--font-archivo" });
@@ -75,39 +76,22 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
               </span>
             </Link>
             <div className="flex items-center gap-1">
-              {profile && (
-                <Link
-                  href="/notificaciones"
-                  className="relative grid h-10 w-10 place-items-center rounded-xl text-muted hover:text-fg"
-                  aria-label={`Notificaciones${unread ? ` (${unread} sin leer)` : ""}`}
-                >
-                  <BellIcon className="h-6 w-6" />
-                  {unread > 0 && (
-                    <span className="absolute right-0.5 top-0.5 grid h-5 min-w-5 place-items-center rounded-full bg-lime px-1 text-[11px] font-black text-ink">
-                      {unread > 9 ? "9+" : unread}
-                    </span>
-                  )}
-                </Link>
-              )}
+              {profile && <NotificationBell initialCount={unread} />}
               {profile?.role === "admin" && (
                 <Link href="/admin" className="grid h-10 w-10 place-items-center rounded-xl text-muted hover:text-fg" aria-label="Administración">
                   <ShieldIcon />
                 </Link>
               )}
-              {profile ? (
+              {profile && (
                 <form action={signOut}>
                   <button className="grid h-10 w-10 place-items-center rounded-xl text-muted hover:text-fg" aria-label="Salir">
                     <LogOutIcon className="h-6 w-6" />
                   </button>
                 </form>
-              ) : (
-                <Link href="/login" className="grid h-10 w-10 place-items-center rounded-xl text-muted hover:text-fg" aria-label="Entrar">
-                  <LogInIcon className="h-6 w-6" />
-                </Link>
               )}
             </div>
           </div>
-          <NavTabs myTeamId={profile?.team_id ?? null} pendingCount={pendingCount} />
+          {profile && <NavTabs myTeamId={profile.team_id} pendingCount={pendingCount} />}
         </header>
         <main className="mx-auto max-w-3xl px-4 py-5 pb-16">{children}</main>
       </body>

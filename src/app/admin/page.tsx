@@ -74,7 +74,7 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
             jugadores, usuario y contraseña, y asígnalos a un grupo.
           </li>
           <li>
-            Los equipos suben sus resultados y el rival los confirma. Si no responde en 5 días, se dan por buenos.
+            Los equipos suben sus resultados y el rival los confirma. Si no responde en 2 días, se dan por buenos.
           </li>
           <li>
             Al acabar la fase, resuelve los pendientes y{" "}

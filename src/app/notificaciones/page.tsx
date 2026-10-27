@@ -19,7 +19,7 @@ type Notification = {
 const KIND: Record<Notification["kind"], { label: string; style: string }> = {
   reported: { label: "Por confirmar", style: "bg-amber-400/15 text-amber-300" },
   confirmed: { label: "Confirmado", style: "bg-up/15 text-up" },
-  auto_confirmed: { label: "Confirmado (5 días)", style: "bg-up/15 text-up" },
+  auto_confirmed: { label: "Confirmado automático", style: "bg-up/15 text-up" },
   disputed: { label: "Rechazado", style: "bg-down/15 text-down" },
   resolved: { label: "Resuelto por admin", style: "bg-sky-400/15 text-sky-300" },
 };

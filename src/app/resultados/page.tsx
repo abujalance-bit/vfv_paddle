@@ -3,6 +3,7 @@ import { loadRankingPage, type RankingSearchParams } from "@/lib/ranking-page";
 import type { Match } from "@/lib/types";
 import { RankingFilters } from "@/components/RankingFilters";
 import { MatchRow } from "@/components/MatchRow";
+import { PhaseCountdown } from "@/components/PhaseCountdown";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,7 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
         <p className="text-sm text-muted">
           {matches.filter(isCounted).length} de {matches.length} partidos jugados
         </p>
+        {period && <PhaseCountdown period={period} className="mt-3" />}
       </div>
 
       {ranking && <RankingFilters basePath="/resultados" rankings={rankings} ranking={ranking} periods={periods} period={period} />}

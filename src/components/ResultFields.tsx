@@ -50,13 +50,18 @@ export function PlayerPicker({
     <fieldset>
       <legend className="label">Jugaron por {team.name} (2 o 3)</legend>
       <div className="flex flex-wrap gap-2">
-        {players.map((p) => (
+        {players.map((p, i) => (
           <label
             key={p.id}
             className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm ring-1 ring-line has-[:checked]:bg-lime/10 has-[:checked]:ring-lime"
           >
             <input type="checkbox" name={name} value={p.id} defaultChecked={selected?.includes(p.id)} className="accent-lime" />
             {p.name}
+            {i === 0 && (
+              <span className="rounded bg-lime/15 px-1 text-[10px] font-black text-lime" title="Capitán/a">
+                C
+              </span>
+            )}
           </label>
         ))}
       </div>

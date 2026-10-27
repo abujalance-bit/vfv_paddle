@@ -5,6 +5,7 @@ import { getProfile } from "@/lib/auth";
 import { getOpenPeriod } from "@/lib/data";
 import { computeStandings } from "@/lib/standings";
 import {
+  captainLabel,
   periodLabel,
   type Group,
   type GroupEntry,
@@ -15,6 +16,7 @@ import {
   type Team,
 } from "@/lib/types";
 import { MatchRow } from "@/components/MatchRow";
+import { PhaseCountdown } from "@/components/PhaseCountdown";
 import { ArrowLeftIcon, BellIcon, ChevronDownIcon, ChevronUpIcon, MinusIcon } from "@/components/Icons";
 
 export const dynamic = "force-dynamic";
@@ -85,6 +87,11 @@ export default async function TeamPage({ params }: { params: Promise<{ id: strin
         </p>
         <h1 className="mt-1 font-display text-4xl font-black uppercase leading-none tracking-tight">{team.name}</h1>
         {isMine && <span className="mt-2 inline-block rounded-full bg-lime px-2.5 py-0.5 text-xs font-black text-ink">TU EQUIPO</span>}
+        {current && current.period.status === "open" && (
+          <div className="relative mt-4">
+            <PhaseCountdown period={current.period} />
+          </div>
+        )}
         {current && (
           <dl className="relative mt-6 flex gap-8">
             <div>
@@ -118,12 +125,17 @@ export default async function TeamPage({ params }: { params: Promise<{ id: strin
       <section className="card">
         <h2 className="h2 mb-3">Componentes</h2>
         <ul className="grid gap-2 sm:grid-cols-3">
-          {players.map((p) => (
+          {players.map((p, i) => (
             <li key={p.id} className="flex items-center gap-3 rounded-2xl bg-panel-2 p-3">
               <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-lime/15 font-display font-black text-lime">
                 {p.name.trim().charAt(0).toUpperCase()}
               </span>
-              <span className="font-semibold">{p.name}</span>
+              <span className="min-w-0">
+                <span className="block font-semibold">{p.name}</span>
+                {i === 0 && (
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-lime">{captainLabel(ranking?.slug)}</span>
+                )}
+              </span>
             </li>
           ))}
           {players.length === 0 && <li className="text-sm text-muted">Sin jugadores.</li>}

@@ -64,7 +64,7 @@ export default async function TeamsPage({ searchParams }: { searchParams: Promis
           </div>
           {[1, 2, 3].map((i) => (
             <div key={i}>
-              <label className="label">Jugador/a {i}</label>
+              <label className="label">Jugador/a {i}{i === 1 && " · capitán/a"}</label>
               <input name={`player${i}`} className="input" />
             </div>
           ))}
