@@ -34,8 +34,18 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Cuenta una visita cuando el usuario vuelve tras un rato sin usar la app.
+  // La cookie se renueva en cada petición y caduca a los 30 minutos de inactividad.
+  if (user) {
+    if (!request.cookies.has(VISIT_COOKIE)) await supabase.rpc("track_visit");
+    response.cookies.set(VISIT_COOKIE, "1", { maxAge: VISIT_WINDOW_SECONDS, httpOnly: true, sameSite: "lax", path: "/" });
+  }
+
   return response;
 }
+
+const VISIT_COOKIE = "vfv_visit";
+const VISIT_WINDOW_SECONDS = 30 * 60;
 
 export const config = {
   // Fuera quedan los ficheros estáticos (logo, iconos, imágenes) que necesita la pantalla de entrar

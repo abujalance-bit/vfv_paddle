@@ -14,6 +14,9 @@ export async function signIn(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword({ email: usernameToEmail(username), password });
   if (error) back("/login", "error", "Usuario o contraseña incorrectos");
 
+  // Si falla el contador no se impide la entrada
+  await supabase.rpc("track_login");
+
   redirect("/");
 }
 
